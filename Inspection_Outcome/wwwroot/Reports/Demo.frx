@@ -1,0 +1,77 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Report ScriptLanguage="CSharp" ReportInfo.Created="01/13/2026 10:00:35" ReportInfo.Modified="01/14/2026 17:50:20" ReportInfo.CreatorVersion="2022.1.0.0">
+  <Dictionary>
+    <MsSqlDataConnection Name="Connection" ConnectionString="rijcmlqVwQ7HW+WYXNi0AxzAVY1Gahp5Ha0VGKwCoALF5AorzFWKqZMmdLCfviS7yDMYeonm7ovoT79IFHlmB1swfI6nAeJF8CUpZb1i+3SZmdrwGtwoYwk+ngAfiQDlRUKv++aocODH+KyJqWQE8cEGqoefC8br2c/Z1Jfn1fhP+vZWUYxmVLPWs+rklEgUTI3ZP23nuezWTzgeQlw54Z/Bo/ZRA==">
+      <TableDataSource Name="TblCarpetInspection1" Alias="TblCarpetInspection" DataType="System.Int32" Enabled="true" TableName="TblCarpetInspection">
+        <Column Name="Id" DataType="System.Int32"/>
+        <Column Name="CustomerCode" DataType="System.String"/>
+        <Column Name="ProjectName" DataType="System.String"/>
+        <Column Name="SrNo" DataType="System.String"/>
+        <Column Name="Quality" DataType="System.String"/>
+        <Column Name="DesignName" DataType="System.String"/>
+        <Column Name="ColorName" DataType="System.String"/>
+        <Column Name="Uom" DataType="System.String"/>
+        <Column Name="Pcs" DataType="System.Int32"/>
+        <Column Name="Wdth_ft" DataType="System.Int32"/>
+        <Column Name="Wdth_inch" DataType="System.Int32"/>
+        <Column Name="Lnth_ft" DataType="System.Int32"/>
+        <Column Name="Lnth_inch" DataType="System.Int32"/>
+        <Column Name="Remarks" DataType="System.String"/>
+        <Column Name="Status" DataType="System.String"/>
+        <Column Name="RejectReason" DataType="System.String"/>
+        <Column Name="DispatchDate" DataType="System.DateTime"/>
+        <Column Name="PassDt" DataType="System.DateTime"/>
+        <Column Name="RejectDt" DataType="System.DateTime"/>
+        <Column Name="CreatedBy" DataType="System.String"/>
+        <Column Name="CreatedOn" DataType="System.DateTime"/>
+        <Column Name="UpdatedBy" DataType="System.String"/>
+        <Column Name="UpdatedOn" DataType="System.DateTime"/>
+        <CommandParameter Name="Parameter" DataType="22"/>
+      </TableDataSource>
+    </MsSqlDataConnection>
+    <Total Name="Total" Evaluator="Data1"/>
+  </Dictionary>
+  <ReportPage Name="Page1" Visible="false" Guides="718.2,708.75" Watermark.Font="Arial Narrow, 60pt, style=Bold">
+    <ReportTitleBand Name="ReportTitle1" Width="718.2" Height="113.4">
+      <TextObject Name="Text26" Left="189" Top="47.25" Width="292.95" Height="28.35" Text="Carpets - Inspection Report&#13;&#10;" HorzAlign="Center" Font="Arial, 15pt, style=Bold"/>
+      <TextObject Name="Text39" Left="255.15" Width="160.65" Height="18.9" Text="Patodia Export" Font="Arial, 15pt, style=Bold"/>
+    </ReportTitleBand>
+    <PageHeaderBand Name="PageHeader1" Top="117.55" Width="718.2" Height="18.9" Guides="0,0,0,0">
+      <TextObject Name="Text2" Left="179.55" Width="56.7" Height="18.9" Border.Lines="All" Text="Code" Font="Arial, 10pt, style=Bold"/>
+      <TextObject Name="Text3" Left="236.25" Width="37.8" Height="18.9" Border.Lines="All" Text="Quality" HorzAlign="Center" Font="Arial, 10pt, style=Bold"/>
+      <TextObject Name="Text4" Left="274.05" Width="94.5" Height="18.9" Border.Lines="All" Text="DesignName" HorzAlign="Center" Font="Arial, 10pt, style=Bold"/>
+      <TextObject Name="Text5" Left="368.55" Width="103.95" Height="18.9" Border.Lines="All" Text="ColorName" Font="Arial, 10pt, style=Bold"/>
+      <TextObject Name="Text1" Width="179.55" Height="18.9" Border.Lines="All" Text="Sr.No&#13;&#10;" HorzAlign="Center" Font="Arial, 10pt, style=Bold"/>
+      <TextObject Name="Text27" Left="472.5" Width="37.8" Height="18.9" Border.Lines="All" Text="Uom" Font="Arial, 10pt, style=Bold"/>
+      <TextObject Name="Text29" Left="510.3" Width="37.8" Height="18.9" Border.Lines="All" Text="Pcs" Font="Arial, 10pt, style=Bold"/>
+      <TextObject Name="Text31" Left="548.1" Width="37.8" Height="18.9" Border.Lines="All" Text="W_ft" HorzAlign="Center" Font="Arial, 10pt, style=Bold"/>
+      <TextObject Name="Text33" Left="585.9" Width="47.25" Height="18.9" Border.Lines="All" Text="W_in" HorzAlign="Center" Font="Arial, 10pt, style=Bold"/>
+      <TextObject Name="Text35" Left="633.15" Width="37.8" Height="18.9" Border.Lines="All" Text="L_ft" HorzAlign="Center" Font="Arial, 10pt, style=Bold"/>
+      <TextObject Name="Text37" Left="670.95" Width="37.8" Height="18.9" Border.Lines="All" Text="L_in" HorzAlign="Center" Font="Arial, 10pt, style=Bold"/>
+    </PageHeaderBand>
+    <GroupHeaderBand Name="GroupHeader1" Top="140.6" Width="718.2" Height="28.35" Hyperlink.DetailPageName="Page2" Guides="0" Condition="TblCarpetInspection.CustomerCode">
+      <TextObject Name="Text25" Left="198.45" Top="9.45" Width="94.5" Height="18.9" Font="Arial, 10pt, style=Bold"/>
+      <DataBand Name="Data1" Top="173.1" Width="718.2" Height="18.9" Hyperlink.ValuesSeparator="" DataSource="TblCarpetInspection1">
+        <TextObject Name="Text8" Left="179.55" Width="56.7" Height="18.9" Border.Lines="All" Text="[TblCarpetInspection.CustomerCode]" HorzAlign="Center" Font="Arial, 10pt"/>
+        <TextObject Name="Text9" Left="236.25" Width="37.8" Height="18.9" Border.Lines="All" Text="[TblCarpetInspection.Quality]" HorzAlign="Center" Font="Arial, 10pt"/>
+        <TextObject Name="Text10" Left="274.05" Width="94.5" Height="18.9" Border.Lines="All" Text="[TblCarpetInspection.DesignName]" HorzAlign="Center" Font="Arial, 10pt"/>
+        <TextObject Name="Text11" Left="368.55" Width="103.95" Height="18.9" Border.Lines="All" Text="[TblCarpetInspection.ColorName]" Font="Arial, 10pt"/>
+        <TextObject Name="Text28" Left="472.5" Width="37.8" Height="18.9" Border.Lines="All" Text="[TblCarpetInspection.Uom]" Font="Arial, 10pt"/>
+        <TextObject Name="Text30" Left="510.3" Width="37.8" Height="18.9" Border.Lines="All" Text="[TblCarpetInspection.Pcs]" HorzAlign="Center" Font="Arial, 10pt"/>
+        <TextObject Name="Text32" Left="548.1" Width="37.8" Height="18.9" Border.Lines="All" Text="[TblCarpetInspection.Wdth_ft]" HorzAlign="Center" Font="Arial, 10pt"/>
+        <TextObject Name="Text34" Left="585.9" Width="47.25" Height="18.9" Border.Lines="All" Text="[TblCarpetInspection.Wdth_inch]" HorzAlign="Center" Font="Arial, 10pt"/>
+        <TextObject Name="Text36" Left="633.15" Width="37.8" Height="18.9" Border.Lines="All" Text="[TblCarpetInspection.Lnth_ft]" HorzAlign="Center" Font="Arial, 10pt"/>
+        <TextObject Name="Text38" Left="670.95" Width="37.8" Height="18.9" Border.Lines="All" Text="[TblCarpetInspection.Lnth_inch]" HorzAlign="Center" Font="Arial, 10pt"/>
+        <TextObject Name="Text23" Width="179.55" Height="18.9" Border.Lines="All" Text="[TblCarpetInspection.SrNo]" HorzAlign="Center" Font="Arial, 10pt"/>
+        <Sort>
+          <Sort Expression="[TblCarpetInspection.CustomerCode]"/>
+          <Sort Expression="[TblCarpetInspection.ProjectName]"/>
+          <Sort Expression="[TblCarpetInspection.SrNo]"/>
+        </Sort>
+      </DataBand>
+      <GroupFooterBand Name="GroupFooter1" Top="196.15" Width="718.2" Height="18.9" Guides="0"/>
+    </GroupHeaderBand>
+    <ReportSummaryBand Name="ReportSummary1" Top="219.2" Width="718.2" Height="75.6"/>
+    <PageFooterBand Name="PageFooter1" Top="298.95" Width="718.2" Height="28.35"/>
+  </ReportPage>
+</Report>

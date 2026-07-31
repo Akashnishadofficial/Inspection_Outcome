@@ -1,0 +1,337 @@
+﻿@{
+    ViewData["Title"] = "Inspection";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<div class="container-fluid mt-4">
+
+    <h4 class="mb-3 text-warning fw-bold">Inspection Dashboard</h4>
+
+    <div class="row g-3 align-items-end">
+
+        <div class="col-sm-3">
+            <label class="form-label">Customer</label>
+            <select id="customerCode" class="form-select">
+                <option value="">-- Select Customer --</option>
+            </select>
+        </div>
+
+        <div class="col-sm-3">
+            <label class="form-label">Project</label>
+            <select id="projectNo" class="form-select">
+                <option value="">-- Select Project --</option>
+            </select>
+        </div>
+
+        <div class="col-sm-3">
+            <label class="form-label">Result</label>
+            <select id="resultDDL" class="form-select" onchange="showResultButton(this.value)">
+                <option value="">--Select--</option>
+                <option value="PASS">PASS</option>
+                <option value="REJECT">REJECT</option>
+            </select>
+        </div>
+
+        <div class="col-sm-3">
+            <label class="form-label">Action</label>
+            <div id="resultBox"></div>
+        </div>
+
+    </div>
+
+    <hr />
+
+    <ul class="nav nav-tabs mb-3">
+        <li class="nav-item">
+            <a class="nav-link active" id="tabPending" onclick="loadTab('PENDING', this)">🕒 Pending (0)</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="tabPass" onclick="loadTab('PASS', this)">✅ Pass (0)</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="tabReject" onclick="loadTab('REJECT', this)">❌ Reject (0)</a>
+        </li>
+    </ul>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped" id="inspectionTable">
+            <thead class="table-light">
+                <tr>
+                    <th>Select</th>
+                    <th>Customer</th>
+                    <th>Project</th>
+                    <th>SrNo</th>
+                    <th>Quality</th>
+                    <th>Design</th>
+                    <th>Color</th>
+                    <th>UOM</th>
+                    <th>PCS</th>
+                    <th>W(ft)</th>
+                    <th>W(in)</th>
+                    <th>L(ft)</th>
+                    <th>L(in)</th>
+                    <th>Status / Action</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+</div>
+
+<script>
+    let currentTab = "PENDING";
+    let activeTabLink = document.getElementById("tabPending");
+
+    // ================= LOAD CUSTOMERS =================
+    window.onload = function () {
+
+        fetch('/Home/GetCustomers')
+            .then(r => r.json())
+            .then(data => {
+                let ddl = document.getElementById("customerCode");
+                ddl.innerHTML = `<option value="">-- Select Customer --</option>`;
+                data.forEach(x => ddl.innerHTML += `<option value="${x}">${x}</option>`);
+            });
+    };
+
+    // ================= LOAD PROJECTS =================
+    document.getElementById("customerCode").addEventListener("change", function () {
+
+        let cust = this.value;
+        let proj = document.getElementById("projectNo");
+        proj.innerHTML = `<option value="">-- Select Project --</option>`;
+
+        if (!cust) return;
+
+        fetch(`/Home/GetProjects?custCode=${cust}`)
+            .then(r => r.json())
+            .then(data => {
+                data.forEach(x => proj.innerHTML += `<option value="${x}">${x}</option>`);
+            });
+    });
+
+    document.getElementById("projectNo").addEventListener("change", function () {
+        document.getElementById("tabPending").click();
+    });
+     // Auto load pending on project select
+    projectName.onchange = function () {
+        document.getElementById("tabPending").click();
+    }  
+    // ================= LOAD TAB DATA =================
+    function loadTab(type, tabLink) {
+
+        currentTab = type;
+
+        if (tabLink) {
+            document.querySelectorAll(".nav-link").forEach(a => a.classList.remove("active"));
+            tabLink.classList.add("active");
+            activeTabLink = tabLink;
+        }
+
+        let cust = document.getElementById("customerCode").value;
+        let proj = document.getElementById("projectNo").value;
+
+        if (!cust || !proj) return;
+
+        fetch(`/Home/GetInspectionDashboardData?type=${type}&custCode=${cust}&projectName=${proj}`)
+            .then(r => r.json())
+            .then(res => {
+
+                let list = [];
+
+                if (Array.isArray(res)) {
+                    list = res;
+                } else if (res && Array.isArray(res.list)) {
+                    list = res.list;
+                }
+
+                bindTable(list, type);
+                updateTabCount(type, list.length);
+            })
+            .catch(err => {
+                alert("Server error or timeout");
+                console.error(err);
+            });
+    }
+
+    // ================= BIND TABLE =================
+    function bindTable(data, type) {
+
+        let tbody = document.querySelector("#inspectionTable tbody");
+        tbody.innerHTML = "";
+
+        if (!data || data.length === 0) {
+            tbody.innerHTML = `<tr>
+                <td colspan="14" class="text-center text-danger fw-bold">
+                    No data found
+                </td>
+            </tr>`;
+            return;
+        }
+
+        data.forEach(x => {
+
+            let chk = type === "PENDING"? `<input type="checkbox" class="rowChk" value="${x.id}" />`: ``;
+
+            let deleteBtn = (type === "PASS" || type === "REJECT")
+                ? `<button class="btn btn-danger btn-sm" onclick="moveToPending(${x.id})">Delete</button>`
+                : '';
+
+            let row = `
+                <tr>
+                    <td>${chk}</td>
+                    <td>${x.customerCode || ''}</td>
+                    <td>${x.projectName || ''}</td>
+                    <td>${x.srNo || ''}</td>
+                    <td>${x.quality || ''}</td>
+                    <td>${x.designName || ''}</td>
+                    <td>${x.colorName || ''}</td>
+                    <td>${x.uom || ''}</td>
+                    <td>${x.pcs || ''}</td>
+                    <td>${x.wdthFt || ''}</td>
+                    <td>${x.wdthInch || ''}</td>
+                    <td>${x.lnthFt || ''}</td>
+                    <td>${x.lnthInch || ''}</td>
+                    <td>${x.status || ''} ${deleteBtn}</td>
+                </tr>`;
+
+            tbody.innerHTML += row;
+        });
+    }
+
+    // ================= SHOW BUTTON =================
+    function showResultButton(val) {
+
+        let box = document.getElementById("resultBox");
+        box.innerHTML = "";
+
+        if (!val) return;
+
+        let cls = val === "PASS" ? "btn-success" : "btn-danger";
+
+        box.innerHTML = `<button class="btn ${cls}" onclick="submitResult('${val}')">${val}</button>`;
+    }
+
+    // ================= SAVE RESULT =================
+       function submitResult(result) {
+
+        let ids = [];
+        document.querySelectorAll(".rowChk:checked").forEach(x => ids.push(parseInt(x.value)));
+
+        if (ids.length === 0) {
+            Swal.fire('Warning', 'Please select at least one row!', 'warning');
+            return;
+        }
+
+        let actionText = result === "PASS" ? "pass" : "reject";
+
+        Swal.fire({
+            title: 'Are you sure?',
+            text: `Do you want to ${actionText} selected items?`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#198754',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, continue',
+            cancelButtonText: 'Cancel'
+        }).then((confirm) => {
+
+            if (!confirm.isConfirmed) return;
+
+            fetch('/Home/SaveInspectionResult', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids: ids, result: result })
+            })
+            .then(r => r.json())
+            .then(res => {
+
+                if (res.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Done!',
+                        text: res.message,
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+
+                    // Reload current tab
+                    setTimeout(() => {
+                        loadTab(currentTab, activeTabLink);
+                    }, 300);
+
+                } else {
+                    Swal.fire('Error', res.message, 'error');
+                }
+            })
+            .catch(err => {
+                Swal.fire('Server Error', 'Something went wrong!', 'error');
+            });
+
+        });
+    }
+
+
+    // ================= DELETE / MOVE TO PENDING =================
+          function moveToPending(id) {
+
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "This record will be deleted and moved back to Pending!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, delete it!',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+
+            if (!result.isConfirmed) return;
+
+            fetch('/Home/DeleteInspection?id=' + id, {
+                method: 'POST'
+            })
+            .then(r => r.json())
+            .then(res => {
+
+                if (res.success) {
+
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Deleted!',
+                        text: res.message,
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+
+                    // Reload current tab
+                    loadTab(currentTab, activeTabLink);
+
+                    // Also refresh Pending tab count/data
+                    setTimeout(() => {
+                        loadTab("PENDING", document.getElementById("tabPending"));
+                    }, 300);
+
+                } else {
+                    Swal.fire('Error', res.message, 'error');
+                }
+
+            })
+            .catch(err => {
+                Swal.fire('Server Error', 'Something went wrong!', 'error');
+            });
+
+        });
+    }
+
+
+    // ================= UPDATE TAB COUNT =================
+    function updateTabCount(type, count) {
+
+        if (type === "PENDING") document.getElementById("tabPending").innerText = `🕒 Pending (${count})`;
+        if (type === "PASS") document.getElementById("tabPass").innerText = `✅ Pass (${count})`;
+        if (type === "REJECT") document.getElementById("tabReject").innerText = `❌ Reject (${count})`;
+    }
+</script>

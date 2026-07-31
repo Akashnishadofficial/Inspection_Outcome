@@ -1,0 +1,218 @@
+﻿@model List<TblCarpetDispatch>
+
+<div class="d-flex justify-content-between align-items-center mb-2">
+    <div class="fw-semibold text-muted">
+        Pending Records : @Model.Count &nbsp;|&nbsp;
+        <span class="text-primary">Selected : <span id="selectedCount">0</span></span>
+    </div>
+    <button type="button" class="btn btn-success px-4" onclick="validateAndSubmit()">
+        📤 Send for Approval
+    </button>
+</div>
+
+<div class="dispatch-table-wrapper">
+    <table class="table table-bordered table-hover align-middle" id="pendingTable">
+        <thead class="table-dark text-center">
+            <tr>
+                <th style="width:40px"><input type="checkbox" id="chkAll" /></th>
+                <th>Customer</th>
+                <th>OrderNo</th>
+                @* <th>SrNo</th> *@
+                <th style="width:150px">Design</th>
+                <th style="width:80px">PCS</th>
+                <th style="width:100px">Ship Mode</th>
+                <th style="width:100px">Remarks</th>
+                <th style="width:140px">Dispatch Date</th>
+                <th>Color</th>
+                <th style="width:70px">Quality</th>
+                <th style="width:50px">W(ft)</th>
+                <th style="width:50px">W(in)</th>
+                <th style="width:50px">L(ft)</th>
+                <th style="width:50px">L(in)</th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (int i = 0; i < Model.Count; i++)
+            {
+                <tr data-customer="@Model[i].CustomerCode"
+                    data-project="@Model[i].ProjectName"
+                    data-orderno="@Model[i].OrderNo"
+                    data-srno="@Model[i].SrNo"
+                    data-design="@Model[i].DesignName"
+                    data-color="@Model[i].ColorName"
+                    data-quality="@Model[i].Quality"
+                    data-wdthft="@Model[i].WdthFt"
+                    data-wdthinch="@Model[i].WdthInch"
+                    data-lnthft="@Model[i].LnthFt"
+                    data-lnthinch="@Model[i].LnthInch"
+                    data-maxpcs="@Model[i].Pcs">
+                    <td class="text-center">
+                        <input type="checkbox" class="chkRow" />
+                    </td>
+                    <td>@Model[i].CustomerCode</td>
+                    <td>@Model[i].OrderNo</td>
+                    @* <td>@Model[i].SrNo</td> *@
+                    <td>@Model[i].DesignName</td>
+                    <td>
+                        <input type="number" class="form-control form-control-sm pcs text-center"
+                               value="@Model[i].Pcs" min="1" max="@Model[i].Pcs" style="width:100%" />
+                    </td>
+                    <td>
+                        <select class="form-select form-select-sm ship" style="width:100%">
+                            <option value="">--Select--</option>
+                            <option>Road</option>
+                            <option>Air</option>
+                            <option>Ship</option>
+                            <option>Courier</option>
+                            <option>TBC</option>
+                        </select>
+                    </td>
+                    <td>
+                        <input type="text" class="form-control form-control-sm remarks" style="width:100%" placeholder="Remarks..." />
+                    </td>
+                    <td>
+                        <input type="date" class="form-control form-control-sm shipdate" style="width:100%" />
+                    </td>
+                    <td>@Model[i].ColorName</td>
+                    <td>@Model[i].Quality</td>
+                    <td>@Model[i].WdthFt</td>
+                    <td>@Model[i].WdthInch</td>
+                    <td>@Model[i].LnthFt</td>
+                    <td>@Model[i].LnthInch</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<script>
+    window.lastShipMode = window.lastShipMode || "";
+    window.lastShipDate = window.lastShipDate || "";
+
+    $(document).off('change', '#chkAll').on('change', '#chkAll', function () {
+        $('.chkRow').prop('checked', $(this).is(':checked')).each(function () {
+            if ($(this).is(':checked')) {
+                var row = $(this).closest('tr');
+                if (window.lastShipMode) row.find('.ship').val(window.lastShipMode);
+                if (window.lastShipDate) row.find('.shipdate').val(window.lastShipDate);
+            }
+        });
+        updateSelectedStats();
+    });
+
+    $(document).off('change', '#pendingTable .chkRow').on('change', '#pendingTable .chkRow', function () {
+        if ($(this).is(':checked')) {
+            var row = $(this).closest('tr');
+            if (window.lastShipMode) row.find('.ship').val(window.lastShipMode);
+            if (window.lastShipDate) row.find('.shipdate').val(window.lastShipDate);
+        }
+        updateSelectedStats();
+    });
+
+    function updateSelectedStats() {
+        $('#selectedCount').text($('.chkRow:checked').length);
+    }
+
+    $(document).off('change', '#pendingTable .ship').on('change', '#pendingTable .ship', function () {
+        window.lastShipMode = $(this).val();
+        var di = $(this).closest('tr').find('.shipdate');
+        if (window.lastShipMode === 'TBC') { di.val('').prop('disabled', true); }
+        else di.prop('disabled', false);
+        $('.chkRow:checked').each(function () {
+            $(this).closest('tr').find('.ship').val(window.lastShipMode);
+        });
+    });
+
+    $(document).off('change', '#pendingTable .shipdate').on('change', '#pendingTable .shipdate', function () {
+        window.lastShipDate = $(this).val();
+        $('.chkRow:checked').each(function () {
+            $(this).closest('tr').find('.shipdate').val(window.lastShipDate);
+        });
+    });
+
+    $(document).off('input', '#pendingTable .pcs').on('input', '#pendingTable .pcs', function () {
+        var max = parseInt($(this).attr('max'));
+        var val = parseInt($(this).val());
+        if (val > max) $(this).val(max);
+        if (val < 1)   $(this).val(1);
+    });
+
+    function validateAndSubmit() {
+        var anyChecked = false, hasError = false;
+
+        $('#pendingTable tbody tr').each(function () {
+            if (!$(this).find('.chkRow').is(':checked')) return;
+            anyChecked = true;
+            var pcs  = parseInt($(this).find('.pcs').val())      || 0;
+            var max  = parseInt($(this).find('.pcs').attr('max')) || 0;
+            var ship = $(this).find('.ship').val();
+            var date = $(this).find('.shipdate').val();
+            var valid = pcs > 0 && pcs <= max && ship && (ship === 'TBC' || date);
+            $(this).toggleClass('table-warning', !valid);
+            if (!valid) hasError = true;
+        });
+
+        if (!anyChecked) { Swal.fire('No Selection', 'Please select at least one row', 'warning'); return; }
+        if (hasError)    { Swal.fire('Missing Fields', 'Please fill PCS, Ship Mode & Date correctly', 'error'); return; }
+
+        Swal.fire({
+            icon: 'question',
+            title: 'Send for Approval?',
+            text: 'Only checked records will be sent',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, Send'
+        }).then(function(result) {
+            if (!result.isConfirmed) return;
+
+            var payload = [];
+            $('#pendingTable tbody tr').each(function () {
+                if (!$(this).find('.chkRow').is(':checked')) return;
+                var d = $(this).data();
+                    payload.push({
+        isSentForApproval: true,
+        customerCode: d.customer  || '',
+        projectName:  d.project   || '',
+        orderNo:      d.orderno   || '',
+        srNo:         d.srno      || '',
+        designName:   d.design    || '',
+        colorName:    d.color     || '',
+        quality:      d.quality   || '',
+        wdthFt:       parseInt(d.wdthft)   || 0,
+        wdthInch:     parseInt(d.wdthinch) || 0,
+        lnthFt:       parseInt(d.lnthft)   || 0,
+        lnthInch:     parseInt(d.lnthinch) || 0,
+        pcs:          parseInt($(this).find('.pcs').val()) || 0,
+        shipMode:     $(this).find('.ship').val(),
+        remarks:      $(this).find('.remarks').val() || '',
+        dispatchDate: $(this).find('.shipdate').val() || null
+    });
+            });
+
+            showLoading(true);
+            $.ajax({
+                url: '/Dispatched/SendForApproval',
+                type: 'POST',
+                contentType: 'application/x-www-form-urlencoded',
+                data: {
+                    __RequestVerificationToken: getToken(),
+                    jsonData: JSON.stringify(payload)
+                },
+                success: function (res) {
+                    showLoading(false);
+                    if (res.success) { showToast(res.message); reloadData(); }
+                    else showToast(res.message, 'error');
+                },
+                error: function () {
+                    showLoading(false);
+                    showToast('Server error.', 'error');
+                }
+            });
+        });
+    }
+</script>
+@* ```
+
+**Key fix — `hiddenData` td hataya, data ab seedha `tr` pe rakha:**
+```
+PEHLE: $(this).find('.hiddenData').data()  ← td se data
+BAAD:  $(this).data()                      ← tr se data — reliable hai *@

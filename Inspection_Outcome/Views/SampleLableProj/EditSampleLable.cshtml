@@ -1,0 +1,212 @@
+﻿@model Inspection_Outcome.Models.TblSampleLable
+
+@{
+    ViewData["Title"] = "Edit Sample Label";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .page-shell {
+        background: #fff;
+        border-radius: 14px;
+        padding: 18px;
+        box-shadow: 0 8px 24px rgba(0,0,0,.05);
+    }
+
+    .page-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #0d6efd;
+    }
+
+    .hint {
+        font-size: 14px;
+        color: #6c757d;
+    }
+
+    .form-label {
+        font-size: 15px;
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
+
+    .form-control {
+        font-size: 16px;
+        padding: 7px 10px;
+        border-radius: 10px;
+    }
+
+    .readonly {
+        background: #f1f3f5;
+        cursor: not-allowed;
+    }
+
+    .divider {
+        border-top: 1px dashed #dee2e6;
+        margin: 14px 0;
+    }
+
+    .action-bar {
+        position: sticky;
+        bottom: 0;
+        background: #fff;
+        border-top: 1px solid #e9ecef;
+        padding: 12px;
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+    }
+</style>
+
+<div class="container-fluid mt-3">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <div>
+            <div class="page-title">Edit Sample Label</div>
+            <div class="hint">Update required fields only</div>
+        </div>
+
+        <a asp-action="SampleLable"
+           class="btn btn-sm btn-outline-secondary">
+            Close
+        </a>
+    </div>
+
+    <div class="page-shell">
+
+        <form asp-action="EditSampleLable" method="post">
+
+            <input type="hidden" asp-for="Id" />
+
+            <!-- BASIC INFO -->
+            <div class="row g-3">
+
+                <div class="col-md-3">
+                    <label class="form-label">Sample No</label>
+                    <input asp-for="SampleNo" class="form-control readonly" readonly />
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Sr No</label>
+                    <input asp-for="SrNo" class="form-control readonly" readonly />
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Customer</label>
+                    <input asp-for="CustomerNo" class="form-control readonly" readonly />
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Project</label>
+                    <input asp-for="ProjectName" class="form-control readonly" readonly />
+                </div>
+
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- EDITABLE SECTION -->
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Design</label>
+                    <input asp-for="Design" class="form-control" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Sub Quality</label>
+                    <input asp-for="SubQuality" class="form-control" />
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Category</label>
+                    <input asp-for="Category" class="form-control" />
+                </div>
+                <div class="col-md-3">
+                    <lable class="form-lable">ItemCode</lable>
+                    <input asp-for="ItemCode" class="form-control" />
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Color</label>
+                    <input asp-for="Color" class="form-control" />
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Material</label>
+                    <input asp-for="Matrial" class="form-control" />
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Texture</label>
+                    <input asp-for="Texture" class="form-control" />
+                </div>
+
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- SIZE INFO -->
+            <div class="row g-3">
+
+                <div class="col-md-3">
+                    <label class="form-label">Width (Ft)</label>
+                    <input asp-for="WdthFt" class="form-control readonly" readonly />
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Width (Inch)</label>
+                    <input asp-for="WdthInch" class="form-control readonly" readonly />
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Length (Ft)</label>
+                    <input asp-for="LnthFt" class="form-control readonly" readonly />
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Length (Inch)</label>
+                    <input asp-for="LnthInch" class="form-control readonly" readonly />
+                </div>
+
+            </div>
+
+            <!-- ACTION BAR -->
+            <div class="action-bar mt-3">
+
+                <button type="button"
+                        id="btnUpdateConfirm"
+                        class="btn btn-success">
+                    Save Changes
+                </button>
+
+                <a asp-action="SampleLable"
+                   class="btn btn-outline-secondary">
+                    Cancel
+                </a>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+<script>
+    document.getElementById("btnUpdateConfirm")
+    .addEventListener("click", function () {
+
+        Swal.fire({
+            title: 'Confirm Update',
+            text: "Save changes?",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, Save'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.querySelector("form").submit();
+            }
+        });
+
+    });
+</script>

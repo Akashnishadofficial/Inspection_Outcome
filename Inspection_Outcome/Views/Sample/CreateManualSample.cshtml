@@ -1,0 +1,216 @@
+﻿@{
+    ViewData["Title"] = "Manual Sample Entry";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    body {
+        background: #f4f6f9;
+    }
+
+    label {
+        font-weight: 600;
+    }
+</style>
+
+<div class="container mt-4">
+    <h3 class="text-center mb-3">📝 Manual Sample Godown Entry</h3>
+
+    @* ===== MESSAGE FROM CONTROLLER ===== *@
+    @if (TempData["Message"] != null)
+    {
+        <script>
+            Swal.fire({
+                icon: '@(TempData["MessageType"]?.ToString() == "warning" ? "warning" : "success")',
+                title: '@(TempData["MessageType"]?.ToString() == "warning" ? "Warning" : "Success")',
+                text: '@TempData["Message"]'
+            });
+        </script>
+    }
+
+
+    <form id="manualForm" method="post" action="/Sample/CreateManualSample" autocomplete="off">
+
+        <!-- ================= SAMPLE NO ================= -->
+        <div class="mb-3">
+            <label>Sample No</label>
+            <input type="text"
+                   id="SampleNo"
+                   name="SampleNo"
+                   class="form-control"
+                   list="sampleNoList"
+                   placeholder="Type or select Sample No"
+                   required />
+            <datalist id="sampleNoList"></datalist>
+        </div>
+
+        <!-- ================= CUSTOMER / PROJECT ================= -->
+        <div class="row">
+            <div class="col-md-4">
+                <label>Customer No</label>
+                <input id="CustomerNo"
+                       name="CustomerNo"
+                       class="form-control"
+                       readonly />
+            </div>
+
+            <div class="col-md-4">
+                <label>Project Name</label>
+                <input id="ProjectName"
+                       name="ProjectName"
+                       class="form-control"
+                       readonly />
+            </div>
+        </div>
+
+        <!-- ================= QUALITY / DESIGN / MATERIAL ================= -->
+        <div class="row mt-3">
+            <div class="col-md-4">
+                <label>Quality</label>
+                <select id="Quality" name="Quality" class="form-control" required>
+                    <option value="">--Select Quality--</option>
+                </select>
+            </div>
+
+            <div class="col-md-4">
+                <label>Design</label>
+                <select id="Design" name="Design" class="form-control" required>
+                    <option value="">--Select Design--</option>
+                </select>
+            </div>
+
+            <div class="col-md-4">
+                <label>Material</label>
+                <select id="Matrial" name="Matrial" class="form-control" required>
+                    <option value="">--Select Material--</option>
+                </select>
+            </div>
+        </div>
+
+        <hr />
+
+        <!-- ================= GODOWN / RACK / BALE ================= -->
+        <div class="row">
+            <div class="col-md-4">
+                <label>Godown No</label>
+                <select name="GodownNo" id="GodownNo" class="form-control" required>
+                    <option value="">--Select Godown--</option>
+                    <option value="01">Godown No.1</option>
+                    <option value="02">Godown No.2</option>
+                    <option value="03">Godown No.3</option>
+                    <option value="04">Godown No.4</option>
+                </select>
+            </div>
+
+            <div class="col-md-4">
+                <label>Rack No</label>
+                <input name="RackNo" class="form-control" required />
+            </div>
+
+            <div class="col-md-4">
+                <label>Bale No</label>
+                <input name="BaleNo" class="form-control" required />
+            </div>
+        </div>
+
+        <!-- ================= SAVE BUTTON ================= -->
+        <div class="text-center mt-4">
+            <button type="submit" class="btn btn-success btn-lg">
+                💾 SAVE
+            </button>
+        </div>
+
+    </form>
+</div>
+
+<script>
+    $(document).ready(function () {
+
+        // ================= LOAD SAMPLE NO LIST =================
+        $.get('/Sample/GetSampleNoList', function (list) {
+            let options = '';
+            $.each(list, function (i, val) {
+                options += `<option value="${val}"></option>`;
+            });
+            $("#sampleNoList").html(options);
+        });
+
+        // ================= SAMPLE NO CHANGE =================
+        $("#SampleNo").on("change blur", function () {
+
+            let sampleNo = $.trim($(this).val());
+            if (sampleNo === "") return;
+
+            $.get('/Sample/GetSampleDataBySampleNo',
+                { sampleNo: sampleNo },
+                function (res) {
+
+                    if (!res.success) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Invalid Sample No',
+                            text: res.message || 'No data found'
+                        });
+                        clearFields();
+                        return;
+                    }
+
+                    $("#CustomerNo").val(res.data.customerNo);
+                    $("#ProjectName").val(res.data.projectName);
+
+                    bindDropdown("#Quality", res.data.qualities);
+                    bindDropdown("#Design", res.data.designs);
+                    bindDropdown("#Matrial", res.data.materials);
+                });
+        });
+
+        // ================= CONFIRM BEFORE SAVE =================
+        $("#manualForm").on("submit", function (e) {
+
+            if (!$("#GodownNo").val() ||
+                !$("input[name='RackNo']").val() ||
+                !$("input[name='BaleNo']").val()) {
+
+                e.preventDefault();
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Missing Data',
+                    text: 'Please fill Godown No, Rack No and Bale No'
+                });
+                return;
+            }
+
+            e.preventDefault();
+
+            Swal.fire({
+                title: 'Confirm Save?',
+                text: "Do you want to save this manual sample entry?",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#198754',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, Save',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    e.target.submit();
+                }
+            });
+        });
+    });
+
+    // ================= HELPERS =================
+    function bindDropdown(selector, list) {
+        let ddl = $(selector);
+        ddl.empty().append('<option value="">--Select--</option>');
+        $.each(list, function (i, val) {
+            ddl.append(`<option value="${val}">${val}</option>`);
+        });
+    }
+
+    function clearFields() {
+        $("#CustomerNo,#ProjectName").val('');
+        $("#Quality,#Design,#Matrial")
+            .html('<option value="">--Select--</option>');
+    }
+</script>

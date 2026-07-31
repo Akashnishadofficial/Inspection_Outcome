@@ -1,0 +1,215 @@
+﻿@model List<Inspection_Outcome.Models.TblSampleLable>
+
+<form asp-action="SaveSampleLabels"asp-controller="SampleLableProj"method="post"id="sampleForm">
+    <div class="d-flex justify-content-between mb-2">
+        <div class="fw-semibold text-muted">
+            Pending Records : @Model.Count
+        </div>
+        <button type="button"
+                class="btn btn-success"
+                onclick="validateAndSubmit()">
+            Generate Label
+        </button>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle">
+            <thead class="table-dark text-center">
+                <tr>
+                    <th><input type="checkbox" id="chkAll"></th>
+                    <th>Sample</th>
+                    <th>SrNo</th>
+                    <th>Customer</th>
+                    <th>Project</th>
+                    <th>Design</th>
+                    <th>Quality</th>
+                    <th>SubQuality</th>
+                    <th>Category</th>
+                    <th>ItemCode</th>
+                    <th>Color</th>
+                    <th>Material</th>
+                    <th>Texture</th>
+                    <th>UOM</th>
+                    <th>W(ft)</th>
+                    <th>W(in)</th>
+                    <th>L(ft)</th>
+                    <th>L(in)</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                @for (int i = 0; i < Model.Count; i++)
+                {
+                    <tr>
+
+                        <td class="text-center">
+                            <input type="checkbox"
+                                   class="chkRow"
+                                   name="[@i].IsSelected"
+                                   value="true" />
+                        </td>
+
+                        <td>@Model[i].SampleNo</td>
+                        <td>@Model[i].SrNo</td>
+                        <td>@Model[i].CustomerNo</td>
+                        <td>@Model[i].ProjectName</td> 
+                        <td>
+                            <input name="[@i].Design" value="@Model[i].Design" class="form-control-sm editable" data-field="Design" />
+                        </td>
+                        <td>@Model[i].Quality</td>
+
+                        <td>
+                            <input name="[@i].SubQuality"
+                                   value="@Model[i].SubQuality"
+                                   class="form-control form-control-sm editable"
+                                   data-field="SubQuality" />
+                        </td>
+
+                        <td>
+                            <input name="[@i].Category"
+                                   value="@Model[i].Category"
+                                   class="form-control form-control-sm editable"
+                                   data-field="Category" />
+                        </td>
+                        <td>
+                            <input name="[@i].ItemCode" value="@Model[i].ItemCode" class="form-control form-control-sm editable" data-field="ItemCode" />
+                        </td>
+
+                        <td>
+                            <input name="[@i].Color"
+                                   value="@Model[i].Color"
+                                   class="form-control-sm editable"
+                                   data-field="Color" />
+                        </td>
+
+                        <td>
+                            <input name="[@i].Matrial"
+                                   value="@Model[i].Matrial"
+                                   class="form-control form-control-sm editable"
+                                   data-field="Material" />
+                        </td>
+
+                        <td>
+                            <input name="[@i].Texture"
+                                   value="@Model[i].Texture"
+                                   class="form-control form-control-sm editable"
+                                   data-field="Texture" />
+                        </td>
+
+                        <td>@Model[i].Uom</td>
+                        <td>@Model[i].WdthFt</td>
+                        <td>@Model[i].WdthInch</td>
+                        <td>@Model[i].LnthFt</td>
+                        <td>@Model[i].LnthInch</td>
+
+                        <input type="hidden" name="[@i].SampleNo" value="@Model[i].SampleNo" />
+                        <input type="hidden" name="[@i].SrNo" value="@Model[i].SrNo" />
+                        <input type="hidden" name="[@i].CustomerNo" value="@Model[i].CustomerNo" />
+                        <input type="hidden" name="[@i].ProjectName" value="@Model[i].ProjectName" />
+                        <input type="hidden" name="[@i].Quality" value="@Model[i].Quality" />
+                        <input type="hidden" name="[@i].Uom" value="@Model[i].Uom" />
+                        <input type="hidden" name="[@i].WdthFt" value="@Model[i].WdthFt" />
+                        <input type="hidden" name="[@i].WdthInch" value="@Model[i].WdthInch" />
+                        <input type="hidden" name="[@i].LnthFt" value="@Model[i].LnthFt" />
+                        <input type="hidden" name="[@i].LnthInch" value="@Model[i].LnthInch" />
+
+                    </tr>
+                }
+
+            </tbody>
+        </table>
+        <div class="d-flex justify-content-end align-items-center mt-2 gap-2">
+
+            <button type="button"
+                    class="btn btn-sm btn-outline-primary"
+                    id="btnPrev">
+                ◀ Previous
+            </button>
+
+            <span id="pageInfo" class="fw-semibold"></span>
+
+            <button type="button"
+                    class="btn btn-sm btn-outline-primary"
+                    id="btnNext">
+                Next ▶
+            </button>
+
+        </div>
+
+    </div>
+
+</form>
+
+<script>
+    // Select All
+    document.addEventListener("change", function (e) {
+        if (e.target.id === "chkAll") {
+            document.querySelectorAll(".chkRow")
+                .forEach(x => x.checked = e.target.checked);
+        }
+    });
+    // Validate before submit
+    function validateAndSubmit() {
+
+        let anyChecked = false;
+
+        document.querySelectorAll(".chkRow").forEach(chk => {
+            if (chk.checked) anyChecked = true;
+        });
+
+        if (!anyChecked) {
+            Swal.fire("Warning",
+                      "Select at least one row",
+                      "warning");
+            return;
+        }
+
+        Swal.fire({
+            title: "Generate Label?",
+            icon: "question",
+            showCancelButton: true,
+            confirmButtonText: "Yes"
+        }).then(r => {
+            if (r.isConfirmed) {
+                document.getElementById("sampleForm").submit();
+            }
+        });
+    }
+    let currentPage = 1;
+    let rowsPerPage = 8;
+    let rows = document.querySelectorAll("table tbody tr");
+
+    function showPage(page) {
+
+        let totalPages = Math.ceil(rows.length / rowsPerPage);
+
+        if (page < 1) page = 1;
+        if (page > totalPages) page = totalPages;
+
+        currentPage = page;
+
+        rows.forEach(r => r.style.display = "none");
+
+        let start = (page - 1) * rowsPerPage;
+        let end = start + rowsPerPage;
+
+        for (let i = start; i < end && i < rows.length; i++) {
+            rows[i].style.display = "";
+        }
+
+        document.getElementById("pageInfo").innerText =`Page ${page} / ${totalPages}`;
+
+        document.getElementById("btnPrev").disabled = page == 1;
+        document.getElementById("btnNext").disabled = page == totalPages;
+    }
+
+    document.getElementById("btnPrev")
+        ?.addEventListener("click", () => showPage(currentPage - 1));
+
+    document.getElementById("btnNext")
+        ?.addEventListener("click", () => showPage(currentPage + 1));
+
+    showPage(1);
+
+
+</script>

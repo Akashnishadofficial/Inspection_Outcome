@@ -1,0 +1,89 @@
+﻿@model List<TblCarpetDispatch>
+
+<div class="dispatch-table-wrapper">
+    <table class="table table-hover align-middle">
+        <thead class="table-dark text-center">
+            <tr>
+                <th>Customer</th>
+                <th>OrderNo</th>
+                <th>Sr No</th>
+                <th>Design</th>
+                <th>Pcs</th>
+                <th>Quality</th>
+                <th>Color</th>
+                <th>Ship Mode</th>
+                <th>Ship Date</th>
+                <th>W(ft)</th>
+                <th>W(in)</th>
+                <th>L(ft)</th>
+                <th>L(in)</th>
+                <th>Reject Reason</th>
+                <th style="width:100px">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (!Model.Any())
+            {
+                <tr>
+                    <td colspan="15" class="text-center text-muted py-4">No rejected records</td>
+                </tr>
+            }
+            else
+            {
+                foreach (var x in Model)
+                {
+                    <tr>
+                        <td>@x.CustomerCode</td>
+                        <td>@x.OrderNo</td>
+                        <td>@x.SrNo</td>
+                        <td>@x.DesignName</td>
+                        <td>@x.Pcs</td>
+                        <td>@x.Quality</td>
+                        <td>@x.ColorName</td>
+                        <td>@x.ShipMode</td>
+                        <td>@x.DispatchDate?.ToString("dd/MM/yy")</td>
+                        <td>@x.WdthFt</td>
+                        <td>@x.WdthInch</td>
+                        <td>@x.LnthFt</td>
+                        <td>@x.LnthInch</td>
+                        <td class="text-danger fw-semibold">@x.RejectRemark</td>
+                        <td class="text-center">
+                            <button class="btn btn-outline-danger btn-sm"
+                                    onclick="confirmDelete(@x.Id)">
+                                🗑 Delete
+                            </button>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+<script>
+    function confirmDelete(id) {
+        Swal.fire({
+            title: 'Delete rejected entry?',
+            text: 'This item will move back to Pending list',
+            icon: 'warning', showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            confirmButtonText: 'Yes, Delete'
+        }).then(result => {
+            if (!result.isConfirmed) return;
+            showLoading(true);
+            $.ajax({
+                url: '/Dispatched/DeleteRejected',
+                type: 'POST',
+                contentType: 'application/json',
+                headers: { 'RequestVerificationToken': getToken() },
+                data: JSON.stringify({ id }),
+                success: function (res) {
+                    showLoading(false);
+                    if (res.success) { showToast(res.message); reloadData(); }
+                    else showToast(res.message, 'error');
+                },
+                error: function () { showLoading(false); showToast('Server error.', 'error'); }
+            });
+        });
+    }
+</script>

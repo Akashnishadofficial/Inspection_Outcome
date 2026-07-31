@@ -1,0 +1,167 @@
+﻿@{
+    ViewData["Title"] = "SampleLable";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid mt-3">
+
+    <!-- Sweet Alert Message -->
+    @if (TempData["Message"] != null)
+    {
+        <script>
+            Swal.fire({
+                icon: '@TempData["MsgType"]',
+                title: '@TempData["Message"]',
+                timer: 1800,
+                showConfirmButton: false
+            });
+        </script>
+    }
+
+    <div class="row mb-3 align-items-center">
+
+        <!-- Left: Title -->
+        <div class="col-md-6 d-flex align-items-center">
+            <h4 class="fw-bold text-primary m-0">
+                📦 Sample Label Entry
+            </h4>
+        </div>
+
+        <!-- Right: Sample No -->
+        <div class="col-md-4 ms-auto">
+            <div class="d-flex align-items-center justify-content-end g-2">
+
+                <label class="fw-semibold me-2 mb-0 text-nowrap text-black fs-5">
+                    Sample No
+                </label>
+
+                <input type="text"
+                       id="sampleNo"
+                       class="form-control w-75"
+                       list="sampleList"
+                       placeholder="Select sample..." />
+            </div>
+        </div>
+
+
+
+    </div>
+    <hr class="mt-2 mb-3" />
+
+
+
+
+    <!-- TABS -->
+    <ul class="nav nav-tabs mb-3">
+
+        <!-- Pending -->
+        <li class="nav-item">
+            <button class="nav-link active tabLink"
+                    data-type="pending">
+                🕒 Pending Labels
+                <span class="badge bg-secondary ms-1"
+                      id="pendingCount">0</span>
+            </button>
+        </li>
+
+        <!-- Generated -->
+        <li class="nav-item">
+            <button class="nav-link tabLink"
+                    data-type="generated">
+                ✅ Generated Labels
+                <span class="badge bg-success ms-1"
+                      id="generatedCount">0</span>
+            </button>
+        </li>
+
+    </ul>
+
+    <!-- CONTENT -->
+    <div id="tabContent"
+         class="p-2 text-muted text-center"
+         style="min-height:250px;">
+        Select sample number to load records
+    </div>
+
+</div>
+
+<!-- SAMPLE LIST -->
+<datalist id="sampleList">
+    @foreach (var s in ViewBag.SampleNos)
+    {
+        <option value="@s"></option>
+    }
+</datalist>
+
+<script>
+
+    function showSampleWarning(){
+        Swal.fire({
+            icon: "warning",
+            title: "Select Sample",
+            text: "Please select sample number first"
+        });
+    }
+
+    /* ================= PENDING ================= */
+    function loadPending(){
+
+        let sample=$("#sampleNo").val();
+
+        if(!sample){
+            showSampleWarning();
+            $("#tabContent").html("");
+            return;
+        }
+
+        $("#tabContent").load(
+            '/SampleLableProj/PendingSampleLable?sampleNo='+sample,
+            function(){
+
+                let count=$("#tabContent tbody tr").length;
+                $("#pendingCount").text(count);
+            });
+    }
+
+    /* ================= GENERATED ================= */
+    function loadGenerated(){
+
+        let sample=$("#sampleNo").val();
+
+        if(!sample){
+            showSampleWarning();
+            $("#tabContent").html("");
+            return;
+        }
+
+        $("#tabContent").load(
+            '/SampleLableProj/GeneratedSampleLable?sampleNo='+sample,
+            function(){
+
+                let count=$("#tabContent tbody tr").length;
+                $("#generatedCount").text(count);
+            });
+    }
+
+    /* SAMPLE CHANGE */
+    $("#sampleNo").on("change",function(){
+
+        $(".tabLink").removeClass("active");
+        $(".tabLink[data-type='pending']").addClass("active");
+
+        loadPending();
+    });
+
+    /* TAB CLICK */
+    $(document).on("click",".tabLink",function(){
+
+        $(".tabLink").removeClass("active");
+        $(this).addClass("active");
+
+        if($(this).data("type")=="pending")
+            loadPending();
+        else
+            loadGenerated();
+    });
+
+</script>

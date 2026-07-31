@@ -1,0 +1,96 @@
+﻿@model List<TblCarpetDispatch>
+
+<div class="d-flex justify-content-between align-items-center mb-2">
+    <div class="fw-semibold text-muted">
+        Dispatched Records : @Model.Count &nbsp;|&nbsp;
+        <span class="text-primary">Selected : <span id="dispSelectedCount">0</span></span>
+    </div>
+    <button type="button" class="btn btn-primary px-4" onclick="saveDispatched()">
+        💾 Save Selected
+    </button>
+</div>
+
+<div class="dispatch-table-wrapper">
+    <table class="table table-bordered table-hover align-middle" id="dispatchedTable">
+        <thead class="table-dark text-center">
+            <tr>
+                <th style="width:40px"><input type="checkbox" id="chkAllDisp" /></th>
+                <th>Customer</th>
+                <th>OrderNo</th>
+                <th>SrNo</th>
+                <th>Design</th>
+                <th>PCS</th>
+                <th style="width:120px">Ship Mode</th>
+                <th style="width:150px">Date</th>
+                <th>Color</th>
+                <th>Quality</th>
+                <th>W(ft)</th>
+                <th>W(in)</th>
+                <th>L(ft)</th>
+                <th>L(in)</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (!Model.Any())
+            {
+                <tr>
+                    <td colspan="14" class="text-center text-muted py-4">No dispatched data</td>
+                </tr>
+            }
+            else
+            {
+                foreach (var x in Model)
+                {
+                    <tr data-id="@x.Id">
+                        <td class="text-center">
+                            <input type="checkbox" class="chkRowDisp" />
+                        </td>
+                        <td>@x.CustomerCode</td>
+                        <td>@x.OrderNo</td>
+                        <td>@x.SrNo</td>
+                        <td>@x.DesignName</td>
+                        <td>@x.Pcs</td>
+                        <td>
+                            <select class="form-select form-select-sm shipDisp" style="width:100%">
+                                <option value="Road" selected="@(x.ShipMode == "Road" ? "selected" : null)">Road</option>
+                                <option value="Air" selected="@(x.ShipMode == "Air" ? "selected" : null)">Air</option>
+                                <option value="Ship" selected="@(x.ShipMode == "Ship" ? "selected" : null)">Ship</option>
+                                <option value="Courier" selected="@(x.ShipMode == "Courier" ? "selected" : null)">Courier</option>
+                                <option value="TBC" selected="@(x.ShipMode == "TBC" ? "selected" : null)">TBC</option>
+                            </select>
+                        </td>
+                        <td>
+                            <input type="date" class="form-control form-control-sm dateDisp"
+                                   value="@(x.DispatchDate?.ToString("yyyy-MM-dd"))"
+                                   style="width:100%"
+                                   @(x.ShipMode == "TBC" ? "disabled" : "") />
+                        </td>
+                        <td>@x.ColorName</td>
+                        <td>@x.Quality</td>
+                        <td>@x.WdthFt</td>
+                        <td>@x.WdthInch</td>
+                        <td>@x.LnthFt</td>
+                        <td>@x.LnthInch</td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+<script>
+    $(document).off('change', '#chkAllDisp').on('change', '#chkAllDisp', function () {
+        $('.chkRowDisp').prop('checked', $(this).is(':checked'));
+        $('#dispSelectedCount').text($('.chkRowDisp:checked').length);
+    });
+
+    $(document).off('change', '#dispatchedTable .chkRowDisp').on('change', '#dispatchedTable .chkRowDisp', function () {
+        $('#dispSelectedCount').text($('.chkRowDisp:checked').length);
+    });
+
+    $(document).off('change', '#dispatchedTable .shipDisp').on('change', '#dispatchedTable .shipDisp', function () {
+        var di = $(this).closest('tr').find('.dateDisp');
+        if ($(this).val() === 'TBC') { di.val('').prop('disabled', true); }
+        else di.prop('disabled', false);
+    });
+</script>

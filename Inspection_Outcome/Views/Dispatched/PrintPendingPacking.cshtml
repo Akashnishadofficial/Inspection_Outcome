@@ -1,0 +1,79 @@
+﻿@model IEnumerable<dynamic>
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Packing Pending List</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th, td {
+            border: 1px solid black;
+            padding: 6px;
+            text-align: center;
+        }
+
+        h3, p {
+            text-align: center;
+            margin: 2px;
+        }
+
+        @@media print {
+            body
+           {
+            margin: 10px;
+           }
+
+        }
+    </style>
+</head>
+<body onload="window.print()">
+    <h3>Packing Pending List</h3>
+    <p>Date: @(ViewBag.PrintDate ?? DateTime.Now.ToString("dd/MM/yy"))</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Sr.No</th>
+                <th>Customer</th>
+                <th>Order No</th>
+                <th>Pending PCS</th>
+                <th>Mode</th>
+                <th>Desp.Date</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @{
+                int s = 1;
+            }
+
+            @foreach (var x in Model)
+            {
+                <tr>
+                    <td>@s</td>
+                    <td>@x.CustomerCode</td>
+                    <td>@x.OrderNo</td>
+                    <td>@x.PendingPcs</td>
+                    <td>@x.Mode</td>
+                    <td>@(x.DispatchDate != null? ((DateTime)x.DispatchDate).ToString("dd/MM/yy"): "")</td>
+
+                </tr>
+
+                s++;
+            }
+        </tbody>
+    </table>
+
+</body>
+</html>

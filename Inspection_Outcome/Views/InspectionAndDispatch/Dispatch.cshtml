@@ -1,0 +1,306 @@
+﻿
+@{
+    ViewData["Title"] = "Dispatch";
+    Layout = "~/Views/Shared/_InspectionLayout.cshtml";
+}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<style>
+    /* Chrome, Edge, Safari */
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    /* Firefox */
+    input[type=number] {
+        -moz-appearance: textfield;
+    }
+</style>
+<div class="container mt-4">
+    <h3 class="mb-3 text-warning fw-bold">Dispatch Entry</h3>
+
+    <div class="row g-3 align-items-end">
+        <div class="col-md-3">
+            <label>Customer</label>
+            <select id="customerCode" class="form-control"></select>
+        </div>
+
+        <div class="col-md-3">
+            <label>Project</label>
+            <select id="projectName" class="form-control"></select>
+        </div>
+
+        <div class="col-md-3">
+            <button id="btnSubmit" class="btn btn-success" disabled>Submit Dispatch</button>
+        </div>
+    </div>
+
+    <hr />
+
+    <ul class="nav nav-tabs mb-3">
+        <li class="nav-item">
+            <a class="nav-link active" id="tabPending" onclick="loadTab('PENDING', this)">🕒 Pending (0)</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="tabPass" onclick="loadTab('PASS', this)">✅ Dispatched (0)</a>
+        </li>
+    </ul>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped" id="inspectionTable">
+            <thead>
+                <tr>
+                    <th>
+                        <input type="checkbox" id="chkAll"> All
+                    </th>
+
+                    <th>Customer</th>
+                    <th>Ship Mode</th>
+                    <th>Ship Date</th>
+                    <th>Project</th>
+                    <th>SrNo</th>
+                    <th>Quality</th>
+                    <th>Design</th>
+                    <th>Color</th>
+                    <th>UOM</th>
+                    <th>PCS</th>
+                    <th>W(ft)</th>
+                    <th>W(in)</th>
+                    <th>L(ft)</th>
+                    <th>L(in)</th>
+
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    let currentTab = "PENDING";
+
+    // Load customers
+    fetch('/InspectionAndDispatch/GetDispatchCustomers').then(r => r.json()).then(d => {
+        customerCode.innerHTML = '<option value="">--Select--</option>';
+        d.forEach(x => customerCode.innerHTML += `<option>${x}</option>`);
+    });
+
+    // Load projects
+    customerCode.onchange = function () {
+        fetch('/InspectionAndDispatch/GetDispatchProjects?customerCode=' + this.value)
+            .then(r => r.json())
+            .then(d => {
+                projectName.innerHTML = '<option value="">--Select--</option>';
+                d.forEach(x => projectName.innerHTML += `<option>${x}</option>`);
+            });
+    }
+
+    // Auto load pending on project select
+    projectName.onchange = function () {
+        document.getElementById("tabPending").click();
+    }
+
+    // Load tab data
+    function loadTab(type, tab) {
+
+        document.querySelectorAll(".nav-link").forEach(a => a.classList.remove("active"));
+        tab.classList.add("active");
+
+        currentTab = type;
+
+        let cust = customerCode.value;
+        let proj = projectName.value;
+        if (!cust || !proj) return;
+
+        fetch(`/InspectionAndDispatch/GetDispatchDashboardData?type=${type}&custCode=${cust}&projectName=${proj}`)
+            .then(r => r.json())
+            .then(res => {
+                bindTable(res.list, type);
+                updateCount(type, res.list.length);
+            });
+    }
+
+    // Bind table
+      function bindTable(list, type) {
+
+        let tbody = document.querySelector("#inspectionTable tbody");
+        tbody.innerHTML = "";
+
+        if (!list || list.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="15" class="text-center text-danger fw-bold">No data found</td></tr>`;
+            return;
+        }
+
+        list.forEach(x => {
+
+            tbody.innerHTML += `
+            <tr>
+                <td>
+                    ${type === "PENDING" ? `<input type="checkbox" class="chk">` : ``}
+                </td>
+
+                <td>${x.customerCode ?? ""}</td>
+
+                <!-- Ship Mode -->
+                <td>
+                    ${type === "PENDING"
+                        ? `
+                            <select class="ship form-control">
+                                <option value="">Mode</option>
+                                <option value="Road">Road</option>
+                                <option value="Air">Air</option>
+                                <option value="Ship">Ship</option>
+                            </select>
+                          `
+                        : (x.shipMode ?? "")
+                    }
+                </td>
+
+                <!-- Ship Date -->
+                <td>
+                    ${type === "PENDING"
+                        ? `<input type="date" class="shipdate form-control">`
+                        : (x.dispatchDate ? x.dispatchDate.split('T')[0] : "")
+                    }
+                </td>
+
+                <td>${x.projectName ?? ""}</td>
+                <td>${x.srNo ?? ""}</td>
+                <td>${x.quality ?? ""}</td>
+                <td>${x.designName ?? ""}</td>
+                <td>${x.colorName ?? ""}</td>
+                <td>${x.uom ?? ""}</td>
+                    <td>
+     ${type === "PENDING"
+       ? `<input type="number" class="pcsEdit form-control" min="1" max="${x.pcs}" value="${x.pcs}">`
+       : (x.pcs ?? "")
+     }
+    </td>
+
+                <td>${x.wdthFt ?? ""}</td>
+                <td>${x.wdthInch ?? ""}</td>
+                <td>${x.lnthFt ?? ""}</td>
+                <td>${x.lnthInch ?? ""}</td>
+
+                <td>
+                    ${type === "PENDING"
+                        ? ``
+                        : `<button class="btn btn-danger btn-sm" onclick="deleteDispatch(${x.id})">Delete</button>`
+                    }
+                </td>
+            </tr>`;
+        });
+    }
+
+    // Update count
+    function updateCount(type, c) {
+        if (type === "PENDING")
+            tabPending.innerText = `🕒 Pending (${c})`;
+        else
+            tabPass.innerText = `✅ Dispatched (${c})`;
+    }
+
+    
+
+
+
+    // Enable submit
+    document.addEventListener("change", () => {
+        let ok = false;
+        document.querySelectorAll(".chk").forEach(c => { if (c.checked) ok = true; });
+        btnSubmit.disabled = !ok;
+    });
+
+    // Save
+    btnSubmit.onclick = function () {
+
+        let list = [];
+
+        document.querySelectorAll("#inspectionTable tbody tr").forEach(r => {
+            if (r.querySelector(".chk")?.checked) {
+
+                let shipMode = r.querySelector(".ship").value;
+                let shipDate = r.querySelector(".shipdate").value;
+
+                if (!shipMode || !shipDate) {
+                    Swal.fire("Warning", "Please select Ship Mode and Ship Date", "warning");
+                    return;
+                }
+                    let pcs = parseInt(r.querySelector(".pcsEdit").value);
+
+    if (pcs <= 0 || pcs > parseInt(r.cells[10].innerText)) {
+        Swal.fire("Warning", "Invalid PCS", "warning");
+        return;
+    }
+
+    list.push({
+        SrNo: r.cells[5].innerText.trim(),
+        Pcs: pcs,
+        ShipMode: shipMode,
+        DispatchDate: shipDate
+    });
+
+            }
+        });
+
+        if (list.length == 0) {
+            Swal.fire("Warning", "No row selected", "warning");
+            return;
+        }
+
+        Swal.fire({
+            title: "Confirm Dispatch?",
+            icon: "question",
+            showCancelButton: true
+        }).then(r => {
+
+            if (!r.isConfirmed) return;
+
+            fetch('/InspectionAndDispatch/SaveDispatch', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(list)
+            })
+            .then(r => r.json())
+            .then(d => {
+                Swal.fire("Done", d.message, "success");
+                loadTab("PENDING", tabPending);
+                loadTab("PASS", tabPass);
+            });
+        });
+    }
+
+    // Delete
+    function deleteDispatch(id) {
+        Swal.fire({ title: "Are You Confirm Delete this Item?", showCancelButton: true })
+            .then(r => {
+                if (r.isConfirmed) {
+                    fetch('/InspectionAndDispatch/DeleteDispatch?id=' + id, { method: 'POST' })
+                        .then(r => r.json())
+                        .then(d => {
+                            Swal.fire("Done", d.message, "success");
+                            loadTab("PENDING", tabPending);
+                            loadTab("PASS", tabPass);
+                        });
+                }
+            });
+    }
+    // Select All Checkbox
+    document.addEventListener("change", function (e) {
+
+        if (e.target.id === "chkAll") {
+            let isChecked = e.target.checked;
+            document.querySelectorAll(".chk").forEach(c => c.checked = isChecked);
+            btnSubmit.disabled = !isChecked;
+        }
+
+        if (e.target.classList.contains("chk")) {
+            let total = document.querySelectorAll(".chk").length;
+            let checked = document.querySelectorAll(".chk:checked").length;
+            chkAll.checked = (total === checked);
+            btnSubmit.disabled = checked === 0;
+        }
+    });
+</script>

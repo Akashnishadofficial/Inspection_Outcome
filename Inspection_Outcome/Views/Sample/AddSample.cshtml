@@ -1,0 +1,272 @@
+﻿@{
+    ViewData["Title"] = "AddSample";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    body {
+        background: #f4f6f9;
+    }
+
+    .scan-box {
+        font-size: 28px;
+        font-weight: 700;
+        text-align: center;
+        height: 60px;
+    }
+
+    label {
+        font-weight: 600;
+    }
+
+    #qrBox {
+        display: none;
+        text-align: center;
+        margin-top: 10px;
+    }
+
+    #reader {
+        width: 320px;
+        margin: auto;
+        display: none;
+    }
+</style>
+
+<div class="container mt-4">
+    <h3 class="text-center mb-3">📦 Sample Godown Scan Entry</h3>
+
+    <form autocomplete="off">
+
+        <!-- BARCODE -->
+        <div class="mb-3">
+            <label>Scan Barcode</label>
+            <input type="text"
+                   id="Barcode"
+                   class="form-control scan-box"
+                   placeholder="SCAN BARCODE (SampleNo-Id)" />
+        </div>
+
+        <!-- MOBILE CAMERA -->
+        <div class="text-center mb-2">
+            <button type="button" class="btn btn-primary" onclick="openCamera()">
+                📷 Scan From Mobile Camera
+            </button>
+        </div>
+
+        <div id="reader"></div>
+
+        <!-- QR CONNECT -->
+        <div class="text-center mb-2">
+            <button type="button" class="btn btn-dark" onclick="showQR()">
+                📱 Use Mobile Camera (QR Connect)
+            </button>
+        </div>
+
+        <div id="qrBox">
+            <p>Scan QR using mobile</p>
+            <div id="qrcode"></div>
+        </div>
+
+        <!-- SAMPLE -->
+        <div class="mb-3">
+            <label>Sample No</label>
+            <input id="SampleNo" class="form-control" readonly />
+        </div>
+
+        <input type="hidden" id="ReqDtlId" />
+
+        <!-- AUTO DATA -->
+        <div class="row">
+            <div class="col-md-4">
+                <label>Customer No</label>
+                <input id="CustomerNo" class="form-control" readonly />
+            </div>
+
+            <div class="col-md-4">
+                <label>Project Name</label>
+                <input id="ProjectName" class="form-control" readonly />
+            </div>
+
+            <div class="col-md-4">
+                <label>Quality</label>
+                <input id="Quality" class="form-control" readonly />
+            </div>
+
+            <div class="col-md-4 mt-2">
+                <label>Design</label>
+                <input id="Design" class="form-control" readonly />
+            </div>
+
+            <div class="col-md-4 mt-2">
+                <label>Material</label>
+                <input id="Matrial" class="form-control" readonly />
+            </div>
+        </div>
+
+        <hr />
+
+        <!-- GODOWN -->
+        <div class="row">
+            <div class="col-md-4">
+                <label>Godown No</label>
+                <select id="GodownNo" class="form-control">
+                    <option value="">Select Godown</option>
+                    <option value="01">Godown 1</option>
+                    <option value="02">Godown 2</option>
+                    <option value="03">Godown 3</option>
+                    <option value="04">Godown 4</option>
+                </select>
+            </div>
+
+            <div class="col-md-4">
+                <label>Rack No</label>
+                <input id="RackNo" class="form-control" />
+            </div>
+
+            <div class="col-md-4">
+                <label>Bale No</label>
+                <input id="BaleNo" class="form-control" />
+            </div>
+        </div>
+
+        <!-- BUTTON -->
+        <div class="text-center mt-4">
+            <button type="button"
+                    class="btn btn-success btn-lg"
+                    onclick="saveEntry()">
+                💾 SAVE ENTRY
+            </button>
+
+            <button type="reset"
+                    class="btn btn-secondary btn-lg ms-2">
+                RESET
+            </button>
+        </div>
+
+    </form>
+</div>
+
+<!-- LIBRARIES -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode"></script>
+
+<script>
+    $(document).ready(function () {
+
+        let scannerSession = Date.now().toString();
+
+        $("#Barcode").on("keydown", function (e) {
+            if (e.key !== "Enter") return;
+            e.preventDefault();
+            fetchBarcodeData(this.value);
+        });
+
+        function fetchBarcodeData(barcode) {
+
+            $.get('/Sample/ScanBarcode', { barcode: barcode }, function (res) {
+
+                if (!res.success) {
+                    alert(res.message);
+                    return;
+                }
+
+                $("#SampleNo").val(res.data.SampleNo);
+                $("#ReqDtlId").val(res.data.ReqDtlId);
+                $("#CustomerNo").val(res.data.CustomerNo);
+                $("#ProjectName").val(res.data.ProjectName);
+                $("#Quality").val(res.data.Quality);
+                $("#Design").val(res.data.Design);
+                $("#Matrial").val(res.data.Matrial);
+
+                $("#RackNo").focus();
+            });
+        }
+
+        window.saveEntry = function () {
+
+            let model = {
+                SampleNo: $("#SampleNo").val(),
+                ReqDtlId: $("#ReqDtlId").val(),
+                CustomerNo: $("#CustomerNo").val(),
+                ProjectName: $("#ProjectName").val(),
+                Quality: $("#Quality").val(),
+                Design: $("#Design").val(),
+                Matrial: $("#Matrial").val(),
+                GodownNo: $("#GodownNo").val(),
+                RackNo: $("#RackNo").val(),
+                BaleNo: $("#BaleNo").val()
+            };
+
+            if (!model.GodownNo || !model.RackNo || !model.BaleNo) {
+                alert("Fill Godown/Rack/Bale");
+                return;
+            }
+
+            $.post("/Sample/SaveGodownEntry", model, function (res) {
+
+                if (!res.success) {
+                    alert(res.message);
+                    return;
+                }
+
+                alert("Saved");
+
+                $("#Barcode").val("").focus();
+                $("#RackNo").val("");
+                $("#BaleNo").val("");
+            });
+        };
+
+        $("#BaleNo").on("keydown", function (e) {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                saveEntry();
+            }
+        });
+
+        // QR CONNECT
+        window.showQR = function () {
+
+            $("#qrBox").show();
+            $("#qrcode").html("");
+
+            let host = window.location.hostname;
+            let url = "https://" + host + ":7201/Sample/MobileScan?session=" + scannerSession;
+
+            new QRCode(document.getElementById("qrcode"), {
+                text: url,
+                width: 200,
+                height: 200
+            });
+        };
+
+    });
+
+    /* CAMERA SCAN */
+    let html5QrCode;
+
+    function openCamera() {
+
+        $("#reader").show();
+
+        html5QrCode = new Html5Qrcode("reader");
+
+        Html5Qrcode.getCameras().then(devices => {
+
+            if (devices.length) {
+
+                html5QrCode.start(
+                    devices[0].id,
+                    { fps: 10, qrbox: 250 },
+                    (decodedText) => {
+
+                        $("#Barcode").val(decodedText);
+                        html5QrCode.stop();
+                        $("#reader").hide();
+                        $("#Barcode").trigger($.Event("keydown", { key: "Enter" }));
+                    }
+                );
+            }
+        });
+    }
+</script>

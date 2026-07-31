@@ -1,0 +1,511 @@
+﻿@{
+    ViewData["Title"] = "Dispatch Entry";
+}
+
+<div class="container-fluid mt-3">
+
+    <!-- Header -->
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <h4 class="fw-bold text-primary mb-0">🚚 Dispatch Entry</h4>
+        </div>
+    </div>
+
+    <!-- Filter -->
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <div class="row g-3 align-items-end">
+
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Customer Code</label>
+                    <select id="customer" class="form-select">
+                        <option value="">-- Select Customer --</option>
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Project Name</label>
+                    <select id="project" class="form-select" disabled>
+                        <option value="">-- Select Project --</option>
+                    </select>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <ul class="nav nav-tabs mb-3">
+        <li class="nav-item">
+            <button class="nav-link active" id="tabPending">
+                🕒 Pending <span class="badge bg-secondary" id="cntPending">0</span>
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" id="tabRejected">
+                ❌ Rejected <span class="badge bg-danger" id="cntRejected">0</span>
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" id="tabDispatch">
+                ✅ Dispatch <span class="badge bg-success" id="cntDispatch">0</span>
+            </button>
+        </li>
+    </ul>
+
+
+    <!-- Action -->
+    <div class="d-flex justify-content-end mb-2">
+        <button id="btnSend" class="btn btn-success" disabled onclick="send()">
+            📤 Send for Approval
+        </button>
+    </div>
+
+    <!-- Table -->
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle mb-0">
+                <thead class="table-dark text-center">
+                    <tr>
+                        <th style="width:40px">✔</th>
+                        <th>Customer</th>
+                        <th>Project</th>
+                        <th>Ship Mode</th>
+                        <th>Ship Date</th>
+                        <th>Sr No</th>
+                        <th>Design</th>
+                        <th>Color</th>
+                        <th>Quality</th>
+                        <th>PCS</th>
+                        <th>W(ft)</th>
+                        <th>W(in)</th>
+                        <th>L(ft)</th>
+                        <th>L(in)</th>
+                        <th>Reject Reason</th>
+                    </tr>
+                </thead>
+                <tbody id="tb" class="text-center">
+                    <tr>
+                        <td colspan="13" class="text-muted py-4">
+                            Select Customer & Project to view data
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+<script>
+    // ================= GLOBAL =================
+    var data = [];
+    var currentTab = 'PENDING';
+
+    // ================= DOCUMENT READY =================
+    $(document).ready(function () {
+
+        // -------- Load Customers --------
+        $.get('/Dispatch/GetCustomers', function (d) {
+
+            var $cust = $('#customer');
+            $cust.empty().append('<option value="">-- Select Customer --</option>');
+
+            $.each(d, function (i, x) {
+                $cust.append('<option>' + x + '</option>');
+            });
+        });
+
+        // -------- Customer → Projects --------
+        $('#customer').on('change', function () {
+
+            var $proj = $('#project');
+            $proj.html('<option value="">-- Select Project --</option>')
+                 .prop('disabled', true);
+
+            if (!this.value) return;
+
+            $.get('/Dispatch/GetProjects',
+                { customerCode: this.value },
+                function (d) {
+                    $proj.prop('disabled', false);
+                    $.each(d, function (i, x) {
+                        $proj.append('<option>' + x + '</option>');
+                    });
+                });
+        });
+
+        // -------- Project → Pending --------
+        $('#project').on('change', function () {
+            if (this.value) loadPending();
+        });
+    });
+
+    // ================= TAB CLICK EVENTS =================
+    $(document).on('click', '#tabPending', function () {
+        loadPending();
+    });
+
+    $(document).on('click', '#tabRejected', function () {
+        loadRejected();
+    });
+
+    $(document).on('click', '#tabDispatch', function () {
+        loadDispatch();
+    });
+
+    // ================= ROW EVENTS =================
+    $(document).on('change', '.chk, .ship, .shipdate', function () {
+
+        validateSelection();
+
+        var tr = $(this).closest('tr');
+        tr.toggleClass('table-success', tr.find('.chk').is(':checked'));
+    });
+
+    // ================= SELECT ALL =================
+        $(document).on('change', '#chkAll', function () {
+
+        var isChecked = this.checked;
+        var hasError = false;
+
+        $('.chk').each(function () {
+
+            var $row = $(this).closest('tr');
+            $(this).prop('checked', isChecked);
+
+            if (isChecked) {
+
+                var shipMode = $row.find('.ship').val();
+                var shipDate = $row.find('.shipdate').val();
+
+                if (!shipMode || !shipDate) {
+                    hasError = true;
+                    $row.addClass('table-warning');
+                } else {
+                    $row.removeClass('table-warning')
+                        .addClass('table-success');
+                }
+            } else {
+                $row.removeClass('table-success table-warning');
+            }
+        });
+
+        validateSelection();
+
+        if (isChecked && hasError) {
+            showValidationMessage(
+                'Please fill Ship Mode and Ship Date for all selected rows'
+            );
+        }
+    });
+
+
+    // ================= VALIDATION =================
+    function validateSelection() {
+
+        var isValid = false;
+        var hasError = false;
+
+        $('#tb tr').each(function () {
+
+            var chk = $(this).find('.chk');
+            if (!chk.length || !chk.is(':checked')) return;
+
+            var shipMode = $(this).find('.ship').val();
+            var shipDate = $(this).find('.shipdate').val();
+
+            if (!shipMode || !shipDate) {
+                hasError = true;
+                $(this).addClass('table-warning')
+                       .removeClass('table-success');
+            } else {
+                $(this).removeClass('table-warning')
+                       .addClass('table-success');
+                isValid = true;
+            }
+        });
+
+        $('#btnSend').prop('disabled', hasError || !isValid);
+    }
+
+    // ================= TAB COUNTS =================
+    function loadCounts() {
+
+        var customer = $('#customer').val();
+        var project = $('#project').val();
+        if (!customer || !project) return;
+
+        $.get('/Dispatch/GetTabCounts',
+            { customerCode: customer, projectName: project },
+            function (d) {
+                $('#cntPending').text(d.pending);
+                $('#cntRejected').text(d.rejected);
+                $('#cntDispatch').text(d.dispatched);
+            });
+    }
+
+    // ================= LOAD PENDING =================
+    function loadPending() {
+
+        var customer = $('#customer').val();
+        var project = $('#project').val();
+        if (!customer || !project) return;
+
+        currentTab = 'PENDING';
+        setActiveTab('tabPending');
+
+        $('#btnSend').text('📤 Send for Approval')
+                     .show()
+                     .prop('disabled', true);
+
+        $.get('/Dispatch/GetPendingData',
+            { customerCode: customer, projectName: project },
+            function (d) {
+
+                data = d;
+                $('#tb').empty();
+
+                if (d.length === 0) {
+                    $('#tb').html(
+                        '<tr><td colspan="16" class="text-muted py-4">' +
+                        'No pending data found</td></tr>'
+                    );
+                    loadCounts();
+                    return;
+                }
+
+                // Select All
+                $('#tb').append(
+                    '<tr class="table-secondary">' +
+                    '<td><input type="checkbox" id="chkAll"></td>' +
+                    '<td colspan="12" class="fw-semibold text-start">Select All</td>' +
+                    '</tr>'
+                );
+
+                $.each(d, function (i, x) {
+
+                    $('#tb').append(
+                        '<tr data-index="' + i + '">' +
+                        '<td><input type="checkbox" class="chk"></td>' +
+                        '<td>' + x.customerCode + '</td>' +
+                        '<td>' + x.projectName + '</td>' +
+                        '<td><select class="form-select form-select-sm ship">' +
+                        '<option value="">-- Select --</option>' +
+                        '<option value="Road">Road</option>' +
+                        '<option value="Air">Air</option>' +
+                        '<option value="Ship">Ship</option>' +
+                        '</select></td>' +
+                        '<td><input type="date" class="form-control form-control-sm shipdate"></td>' +
+                        '<td>' + x.srNo + '</td>' +
+                        '<td>' + x.designName + '</td>' +
+                        '<td>' + x.colorName + '</td>' +
+                        '<td>' + x.quality + '</td>' +
+                        '<td><input type="number" min="1" class="form-control form-control-sm pcs" value="' + x.pcs + '"></td>' +
+                        '<td>' + (x.wdthFt || '-') + '</td>' +
+                        '<td>' + (x.wdthInch || '-') + '</td>' +
+                        '<td>' + (x.lnthFt || '-') + '</td>' +
+                        '<td>' + (x.lnthInch || '-') + '</td>' +
+                        '</tr>'
+                    );
+                });
+
+                validateSelection();
+                loadCounts();
+            });
+    }
+
+    // ================= LOAD REJECTED =================
+    function loadRejected() {
+
+        var customer = $('#customer').val();
+        var project = $('#project').val();
+        if (!customer || !project) return;
+
+        currentTab = 'REJECTED';
+        setActiveTab('tabRejected');
+        $('#btnSend').hide();
+
+        $.get('/Dispatch/GetRejectedData',
+            { customerCode: customer, projectName: project },
+            function (d) {
+
+                data = d;
+                $('#tb').empty();
+
+                if (d.length === 0) {
+                    $('#tb').html(
+                        '<tr><td colspan="16" class="text-muted py-4">' +
+                        'No rejected data</td></tr>'
+                    );
+                    loadCounts();
+                    return;
+                }
+
+                $.each(d, function (i, x) {
+
+                    $('#tb').append(
+                        '<tr data-index="' + i + '">' +
+                        '<td></td>' +
+                        '<td>' + x.customerCode + '</td>' +
+                        '<td>' + x.projectName + '</td>' +
+                        '<td>' + x.shipMode + '</td>' +
+                        '<td>' + (x.dispatchDate ? x.dispatchDate.split("T")[0] : '') + '</td>' +
+                        '<td>' + x.srNo + '</td>' +
+                        '<td>' + x.designName + '</td>' +
+                        '<td>' + x.colorName + '</td>' +
+                        '<td>' + x.quality + '</td>' +
+                        '<td>' + x.pcs + '</td>' +
+                        '<td>' + (x.wdthFt || '-') + '</td>' +
+                        '<td>' + (x.wdthInch || '-') + '</td>' +
+                        '<td>' + (x.lnthFt || '-') + '</td>' +
+                        '<td>' + (x.lnthInch || '-') + '</td>' +
+                        '<td class="text-danger fw-semibold">' + (x.rejectRemark || '-') + '</td>' +
+                        '<td>' +'<button class="btn btn-sm btn-danger" ' +
+                             'onclick="deleteRejected(' + x.id + ')">' +
+                             '🗑 Delete</button>' +
+                       '</td>' +
+                        '</tr>'
+                    );
+                });
+
+                validateSelection();
+                loadCounts();
+            });
+    }
+
+    // ================= LOAD DISPATCH =================
+    function loadDispatch() {
+
+        var customer = $('#customer').val();
+        var project = $('#project').val();
+        if (!customer || !project) return;
+
+        currentTab = 'DISPATCH';
+        setActiveTab('tabDispatch');
+
+        $('#btnSend').hide();
+
+        $.get('/Dispatch/GetDispatchData',
+            { customerCode: customer, projectName: project },
+            function (d) {
+
+                $('#tb').empty();
+
+                if (d.length === 0) {
+                    $('#tb').html(
+                        '<tr><td colspan="16" class="text-muted py-4">' +
+                        'No dispatched data</td></tr>'
+                    );
+                    loadCounts();
+                    return;
+                }
+
+                $.each(d, function (i, x) {
+
+                    $('#tb').append(
+                        '<tr>' +
+                        '<td></td>' +
+                        '<td>' + x.customerCode + '</td>' +
+                        '<td>' + x.projectName + '</td>' +
+                        '<td>' + x.shipMode + '</td>' +
+                        '<td>' + (x.dispatchDate ? x.dispatchDate.split("T")[0] : '') + '</td>' +
+                        '<td>' + x.srNo + '</td>' +
+                        '<td>' + x.designName + '</td>' +
+                        '<td>' + x.colorName + '</td>' +
+                        '<td>' + x.quality + '</td>' +
+                        '<td>' + x.pcs + '</td>' +
+                        '<td>' + (x.wdthFt || '-') + '</td>' +
+                        '<td>' + (x.wdthInch || '-') + '</td>' +
+                        '<td>' + (x.lnthFt || '-') + '</td>' +
+                        '<td>' + (x.lnthInch || '-') + '</td>' +
+                        '</tr>'
+                    );
+                });
+
+                loadCounts();
+            });
+    }
+
+    // ================= SEND / RESEND =================
+    function send() {
+
+        var list = [];
+
+        $('#tb tr').each(function () {
+
+            if ($(this).find('.chk').is(':checked')) {
+
+                var idx = $(this).data('index');
+                var rowData = data[idx];
+                if (!rowData) return;
+
+                list.push({
+                    Id: rowData.id,
+                    CustomerCode: rowData.customerCode,
+                    ProjectName: rowData.projectName,
+                    SrNo: rowData.srNo,
+                    DesignName: rowData.designName,
+                    ColorName: rowData.colorName,
+                     Quality: rowData.quality,
+                    Pcs: $(this).find('.pcs').val(),
+                    ShipMode: $(this).find('.ship').val(),
+                    DispatchDate: $(this).find('.shipdate').val(),
+                    WdthFt: rowData.wdthFt,
+                    WdthInch: rowData.wdthInch, 
+                    LnthFt: rowData.lnthFt, 
+                    LnthInch: rowData.lnthInch
+                });
+            }
+        });
+
+        if (list.length === 0) {
+            alert('Please select at least one row');
+            return;
+        }
+
+        var apiUrl = '/Dispatch/SendForApproval';
+
+        $.ajax({
+            url: apiUrl,
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(list),
+            success: function (d) {
+                alert(d.message);
+                loadPending();
+            }
+        });
+    }
+
+    // ================= TAB ACTIVE =================
+    function setActiveTab(id) {
+        $('.nav-link').removeClass('active');
+        $('#' + id).addClass('active');
+    }
+        function showValidationMessage(msg) {
+        alert(msg);
+    }
+        function deleteRejected(id) {
+
+        if (!confirm('Are you sure you want to delete this rejected entry?')) {
+            return;
+        }
+
+        $.ajax({
+            url: '/Dispatch/DeleteRejected',
+            type: 'POST',
+            data: { id: id },
+            success: function () {
+
+                alert('Rejected entry deleted successfully');
+
+                // 🔥 Rejected reload
+                loadRejected();
+
+                // 🔥 Pending count & data refresh
+                loadCounts();
+            }
+        });
+    }
+
+</script>

@@ -1,0 +1,254 @@
+﻿@model List<TblCarpetDispatch>
+@{
+    ViewData["Title"] = "Dispatch Approval";
+}
+
+<style>
+    body { background: #f1f5f9; font-family: "Segoe UI", Tahoma, Arial, sans-serif; }
+
+    .dispatch-topbar {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 12px 15px; background: #0d6efd; color: white;
+        border-radius: 6px; margin-bottom: 12px;
+    }
+    .dispatch-title h4 { margin: 0; font-weight: 600; }
+    .dispatch-right { display: flex; align-items: center; gap: 15px; }
+    .pending-count {
+        background: #ffc107; color: black;
+        padding: 4px 10px; border-radius: 5px;
+        font-weight: 500; font-size: 13px;
+    }
+    .dispatch-buttons button { margin-left: 5px; }
+
+    .dispatch-table-wrapper {
+        max-height: 70vh; overflow: auto;
+        background: #f4f5f7; border: 1px solid #dcdfe3;
+    }
+    .dispatch-table-wrapper thead th {
+        position: sticky; top: 0;
+        background: #e5e7eb; color: #374151;
+        z-index: 5; font-weight: 600;
+        border: 1px solid #d7dbe0;
+        white-space: nowrap;
+    }
+    .dispatch-table-wrapper td {
+        padding: 8px 10px; font-size: 13px;
+        background: #fff; border: 1px solid #d7dbe0;
+        white-space: nowrap; vertical-align: middle;
+    }
+    tbody tr:nth-child(even) td { background: #fafafa; }
+    tbody tr:hover td { background: #eef2f7; }
+    tbody tr:has(.chkRow:checked) td { background: #dbeafe !important; }
+    input, select { height: 35px; border-radius: 6px; font-size: 13px; }
+
+    #loadingOverlay {
+        display: none; position: fixed; inset: 0;
+        background: rgba(255,255,255,.6); z-index: 9999;
+        align-items: center; justify-content: center;
+    }
+    #loadingOverlay.show { display: flex; }
+</style>
+
+<div id="loadingOverlay">
+    <div class="spinner-border text-primary" style="width:3rem;height:3rem;"></div>
+</div>
+
+<div class="toast-container position-fixed top-0 end-0 p-3" id="toastContainer"></div>
+
+<!-- AntiForgery for AJAX -->
+<form id="__AjaxForm" style="display:none">@Html.AntiForgeryToken()</form>
+
+<div class="container-fluid mt-2">
+
+    <div class="dispatch-topbar">
+        <div class="dispatch-title">
+            <h4>Dispatch Approval</h4>
+        </div>
+        <div class="dispatch-right">
+            <span class="pending-count" id="pendingBadge">
+                Pending : @Model.Count
+            </span>
+            <div class="dispatch-buttons">
+                <button class="btn btn-success btn-sm" onclick="approveSelected()">✔ Approve Selected</button>
+                <button class="btn btn-danger btn-sm"  onclick="rejectSelected()">✖ Reject Selected</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="dispatch-table-wrapper">
+        <table class="table table-bordered table-hover align-middle mb-0 text-center" id="approvalTable">
+            <thead>
+                <tr>
+                    <th width="40"><input type="checkbox" id="chkAll" /></th>
+                    <th>Customer</th>
+                    <th>Order No</th>
+                    <th>PCS</th>
+                    <th>Ship Mode</th>
+                    <th>Dispatch Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var x in Model)
+                {
+                    <tr data-orderno="@x.OrderNo"
+                        data-shipmode="@x.ShipMode"
+                        data-dispatchdate="@(x.DispatchDate?.ToString("yyyy-MM-dd"))">
+                        <td><input type="checkbox" class="chkRow" /></td>
+                        <td>@x.CustomerCode</td>
+                        <td>@x.OrderNo</td>
+                        <td>@x.Pcs</td>
+                        <td>
+                            <select class="form-select ship" style="width:110px;margin:auto;">
+                                <option value="Road" selected="@(x.ShipMode == "Road" ? "selected" : null)">Road</option>
+                                <option value="Air" selected="@(x.ShipMode == "Air" ? "selected" : null)">Air</option>
+                                <option value="Ship" selected="@(x.ShipMode == "Ship" ? "selected" : null)">Ship</option>
+                                <option value="Courier" selected="@(x.ShipMode == "Courier" ? "selected" : null)">Courier</option>
+                                <option value="TBC" selected="@(x.ShipMode == "TBC" ? "selected" : null)">TBC</option>
+                            </select>
+                        </td>
+                        <td>
+                            <input type="date" class="form-control dispatch"
+                                   value="@(x.DispatchDate?.ToString("yyyy-MM-dd"))"
+                                   style="width:150px;margin:auto;"
+                                   @(x.ShipMode=="TBC" ? "disabled" : "") />
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+// ============ HELPERS ============
+function getToken() {
+    return document.querySelector('#__AjaxForm input[name="__RequestVerificationToken"]').value;
+}
+function showLoading(v) {
+    document.getElementById('loadingOverlay').classList.toggle('show', v);
+}
+function showToast(msg, type = 'success') {
+    const id = 't' + Date.now();
+    const bg = type === 'success' ? 'text-bg-success' : 'text-bg-danger';
+    document.getElementById('toastContainer').insertAdjacentHTML('beforeend',
+        `<div id="${id}" class="toast align-items-center ${bg} border-0 show" role="alert">
+            <div class="d-flex">
+                <div class="toast-body">${msg}</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>`);
+    setTimeout(() => document.getElementById(id)?.remove(), 3500);
+}
+
+// ============ CHKALL ============
+document.getElementById('chkAll').addEventListener('change', function () {
+    document.querySelectorAll('.chkRow').forEach(c => c.checked = this.checked);
+});
+
+// ============ SHIP MODE CHANGE ============
+document.getElementById('approvalTable').addEventListener('change', function (e) {
+    if (e.target.classList.contains('ship')) {
+        const row = e.target.closest('tr');
+        const di  = row.querySelector('.dispatch');
+        if (e.target.value === 'TBC') { di.value = ''; di.disabled = true; }
+        else di.disabled = false;
+    }
+});
+
+// ============ APPROVE ============
+function approveSelected() {
+    const checked = document.querySelectorAll('.chkRow:checked');
+    if (!checked.length) { Swal.fire('Warning', 'Select at least one row', 'warning'); return; }
+
+    let hasError = false;
+    const payload = [];
+
+    checked.forEach(chk => {
+        const row      = chk.closest('tr');
+        const orderNo  = row.dataset.orderno;
+        const shipMode = row.querySelector('.ship').value;
+        const date     = row.querySelector('.dispatch').value;
+
+        if (shipMode !== 'TBC' && !date) { hasError = true; return; }
+
+        payload.push({
+            orderNo:      orderNo,
+            shipMode:     shipMode,
+            dispatchDate: date || null
+        });
+    });
+
+    if (hasError) { Swal.fire('Error', 'Date required for non-TBC shipments', 'error'); return; }
+
+    Swal.fire({
+        icon: 'question', title: 'Approve Selected?',
+        text: `${payload.length} record(s) will be approved`,
+        showCancelButton: true, confirmButtonText: 'Yes, Approve',
+        confirmButtonColor: '#198754'
+    }).then(result => {
+        if (!result.isConfirmed) return;
+        showLoading(true);
+        fetch('/Dispatched/ApproveBulk', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': getToken() },
+            body: JSON.stringify(payload)
+        })
+        .then(r => r.json())
+        .then(res => {
+            showLoading(false);
+            if (res.success) {
+                showToast(res.message);
+                removeCheckedRows();
+            } else {
+                showToast(res.message, 'error');
+            }
+        })
+        .catch(() => { showLoading(false); showToast('Server error.', 'error'); });
+    });
+}
+
+// ============ REJECT ============
+function rejectSelected() {
+    const checked = document.querySelectorAll('.chkRow:checked');
+    if (!checked.length) { Swal.fire('Warning', 'Select at least one row', 'warning'); return; }
+
+    Swal.fire({
+        title: 'Reject Reason',
+        input: 'textarea',
+        inputPlaceholder: 'Enter reason...',
+        showCancelButton: true,
+        inputValidator: v => (!v || v.trim().length < 3) ? 'Enter a valid reason (min 3 chars)' : null
+    }).then(result => {
+        if (!result.isConfirmed) return;
+
+        const orders = [];
+        checked.forEach(chk => orders.push(chk.closest('tr').dataset.orderno));
+
+        showLoading(true);
+        fetch('/Dispatched/RejectBulk', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': getToken() },
+            body: JSON.stringify({ orders, remark: result.value })
+        })
+        .then(r => r.json())
+        .then(res => {
+            showLoading(false);
+            if (res.success) {
+                showToast(res.message);
+                removeCheckedRows();
+            } else {
+                showToast(res.message, 'error');
+            }
+        })
+        .catch(() => { showLoading(false); showToast('Server error.', 'error'); });
+    });
+}
+
+// ============ REMOVE APPROVED/REJECTED ROWS ============
+function removeCheckedRows() {
+    document.querySelectorAll('.chkRow:checked').forEach(chk => chk.closest('tr').remove());
+    const remaining = document.querySelectorAll('#approvalTable tbody tr').length;
+    document.getElementById('pendingBadge').textContent = 'Pending : ' + remaining;
+    document.getElementById('chkAll').checked = false;
+}
+</script>

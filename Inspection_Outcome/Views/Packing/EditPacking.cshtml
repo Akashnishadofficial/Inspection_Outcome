@@ -1,0 +1,133 @@
+﻿@model Inspection_Outcome.Models.TblPacking
+
+@{
+    ViewData["Title"] = "Edit Packing";
+}
+@if (TempData["Error"] != null)
+{
+    <script>
+        Swal.fire("Error","@TempData["Error"]","error");
+    </script>
+}
+<style>
+    .page-shell {
+        background: #fff;
+        border-radius: 14px;
+        padding: 18px;
+        box-shadow: 0 8px 24px rgba(0,0,0,.05);
+    }
+
+    .page-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #198754;
+    }
+
+    .form-label {
+        font-weight: 600;
+    }
+
+    .readonly {
+        background: #f1f3f5;
+        cursor: not-allowed;
+    }
+
+    .action-bar {
+        position: sticky;
+        bottom: 0;
+        background: #fff;
+        padding: 12px;
+        border-top: 1px solid #ddd;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+</style>
+
+<div class="container-fluid mt-3">
+
+    <div class="d-flex justify-content-between mb-2">
+        <div>
+            <div class="page-title">Edit Packing</div>
+            <div class="text-muted">Modify packing details</div>
+        </div>
+
+        <a asp-action="IndexPacking"class="btn btn-outline-secondary btn-sm">
+            Close
+        </a>
+    </div>
+
+    <div class="page-shell">
+        <form asp-action="EditPacking" method="post" id="editForm">
+            <input type="hidden" asp-for="Id" />
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Customer</label>
+                    <input asp-for="CustomerCode" class="form-control readonly"readonly />
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Order No</label>
+                    <input asp-for="OrderNo"class="form-control readonly"readonly />
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Mode</label>
+                    <input asp-for="Mode"class="form-control readonly"readonly />
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Packed PCS</label>
+                    <input asp-for="Pcs"id="pcsInput"class="form-control"type="number"min="1" />
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Desp. Date</label>
+                    <input asp-for="DespDate"class="form-control"type="date" />
+                </div>
+
+            </div>
+
+            <div class="action-bar mt-3">
+
+                <button type="button"id="btnUpdateConfirm"class="btn btn-success">
+                    Save Changes
+                </button>
+
+                <a asp-action="IndexPacking"class="btn btn-outline-secondary">
+                    Cancel
+                </a>
+
+            </div>
+
+        </form>
+
+    </div>
+</div>
+
+<script>
+
+    document.getElementById("btnUpdateConfirm")
+    .addEventListener("click", function () {
+
+    let pcs = document.getElementById("pcsInput").value;
+
+    if (!pcs || pcs <= 0) {
+        Swal.fire("Invalid PCS","Enter valid quantity","warning");
+        return;
+    }
+
+    Swal.fire({
+    title:'Confirm Update',
+    text:'Save packing changes?',
+    icon:'question',
+    showCancelButton:true,
+    confirmButtonText:'Save'
+    }).then(res=>{
+    if(res.isConfirmed){
+    document.getElementById("editForm").submit();
+    }
+    });
+    });
+
+</script>

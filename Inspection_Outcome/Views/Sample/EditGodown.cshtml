@@ -1,0 +1,145 @@
+﻿@model TblSampleGodownDtl
+
+@{
+    ViewData["Title"] = "Edit Godown Entry";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    body {
+        background-color: #f4f6f9;
+    }
+
+    .page-title {
+        font-weight: 600;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #dee2e6;
+        padding-bottom: 10px;
+    }
+
+    label {
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+    .form-control[readonly] {
+        background-color: #e9ecef;
+        cursor: not-allowed;
+    }
+
+    .action-bar {
+        margin-top: 25px;
+        padding-top: 15px;
+        border-top: 1px solid #dee2e6;
+    }
+</style>
+
+<div class="container mt-4">
+
+    <h4 class="page-title">✏️ Edit Sample Godown Entry</h4>
+
+    @* MESSAGE *@
+    @if (TempData["Message"] != null)
+    {
+        <script>
+            Swal.fire({
+                icon: '@(TempData["MessageType"]?.ToString() == "warning" ? "warning" : "success")',
+                title: '@(TempData["MessageType"]?.ToString() == "warning" ? "Warning" : "Success")',
+                text: '@TempData["Message"]'
+            });
+        </script>
+    }
+
+
+    <form id="editForm" method="post" action="/Sample/EditGodown">
+
+        <!-- REQUIRED -->
+        <input type="hidden" asp-for="Id" />
+
+        <div class="row g-3">
+
+            <!-- READ ONLY DATA -->
+            <div class="col-md-3">
+                <label>Sample No</label>
+                <input asp-for="SampleNo" class="form-control" readonly />
+            </div>
+            
+            <div class="col-md-3">
+                <label>Customer No</label>
+                <input asp-for="CustomerNo" class="form-control" readonly />
+            </div>
+
+            <div class="col-md-3">
+                <label>Project Name</label>
+                <input asp-for="ProjectName" class="form-control" readonly />
+            </div>
+
+            <!-- EDITABLE DATA -->
+            <div class="col-md-3">
+                <label>Godown No</label>
+                <input asp-for="GodownNo" id="GodownNo" class="form-control" required />
+            </div>
+
+            <div class="col-md-3">
+                <label>Rack No</label>
+                <input asp-for="RackNo" id="RackNo" class="form-control" required />
+            </div>
+
+            <div class="col-md-3">
+                <label>Bale No</label>
+                <input asp-for="BaleNo" id="BaleNo" class="form-control" required />
+            </div>
+        </div>
+
+        <!-- ACTION BAR -->
+        <div class="action-bar d-flex justify-content-between">
+            <a href="/Sample/ShowSample" class="btn btn-outline-secondary">
+                ⬅ Back
+            </a>
+
+            <button type="submit" class="btn btn-danger">
+                🔄 Update
+            </button>
+        </div>
+
+    </form>
+
+</div>
+
+<script>
+    $("#editForm").on("submit", function (e) {
+
+        e.preventDefault();
+
+        let godown = $("#GodownNo").val().trim();
+        let rack = $("#RackNo").val().trim();
+        let bale = $("#BaleNo").val().trim();
+
+        // 🔴 VALIDATION
+        if (!godown || !rack || !bale) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Validation Error',
+                text: 'Godown No, Rack No and Bale No are required'
+            });
+            return;
+        }
+
+        // 🟡 CONFIRMATION
+        Swal.fire({
+            title: 'Confirm Update?',
+            text: 'Do you want to update this godown entry?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, Update',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+
+            if (result.isConfirmed) {
+                e.target.submit(); // ✅ FINAL SUBMIT
+            }
+        });
+    });
+</script>

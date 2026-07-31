@@ -1,0 +1,60 @@
+﻿@model IEnumerable<dynamic>
+
+@if (TempData["Success"] != null)
+{
+    <script>
+        Swal.fire("Success","@TempData["Success"]","success");
+    </script>
+}
+
+<div class="table-responsive">
+
+    <table class="table table-bordered table-hover mb-0">
+
+        <thead class="table-dark text-center">
+            <tr>
+                <th>Customer</th>
+                <th>Order No</th>
+                <th>Total PCS</th>
+                <th>Desp.Date</th>
+                <th>Mode</th>
+                <th style="width:150px">Action</th>
+            </tr>
+        </thead>
+
+        <tbody class="text-center">
+
+            @if (Model == null || !Model.Any())
+            {
+                <tr>
+                    <td colspan="6">No packed records available</td>
+                </tr>
+            }
+            else
+            {
+                foreach (var x in Model)
+                {
+                    <tr>
+                        <td>@x.CustomerCode</td>
+                        <td>@x.OrderNo</td>
+                        <td class="fw-bold text-success">
+                            @x.Pcs
+                        </td>
+                        <td>
+                            @(x.DespDate != null ? ((DateTime)x.DespDate).ToString("dd/MM/yy"): "")
+                        </td>
+                        <td>@x.Mode</td>
+                        <td>
+                            <a asp-action="EditPacking"asp-route-id="@x.Id"class="btn btn-primary btn-sm me-1">Edit</a>
+                            <button class="btn btn-danger btn-sm"onclick="deletePackingOrder(@x.Id)">Delete</button>
+                        </td>
+
+                    </tr>
+                }
+            }
+
+        </tbody>
+
+    </table>
+
+</div>

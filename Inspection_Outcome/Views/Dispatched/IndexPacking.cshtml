@@ -1,0 +1,139 @@
+﻿@{
+    ViewData["Title"] = "Packing";
+
+    var pending = ViewBag.Pending as List<dynamic> ?? new List<dynamic>();
+    var packed = ViewBag.Packed as List<dynamic> ?? new List<dynamic>();
+}
+
+<div class="container-fluid mt-3">
+
+    <!-- HEADER -->
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <h4 class="fw-bold text-primary mb-0">📦 Packing Summary</h4>
+        </div>
+    </div>
+
+    <!-- TABS -->
+    <ul class="nav nav-tabs mb-3">
+
+        <li class="nav-item">
+            <button class="nav-link active" data-bs-toggle="tab"data-bs-target="#pendingTab">
+                Pending
+                <span class="badge bg-secondary">@pending.Count</span>
+            </button>
+        </li>
+
+        <li class="nav-item">
+            <button class="nav-link"data-bs-toggle="tab"data-bs-target="#packedTab">
+                Packed
+                <span class="badge bg-success">@packed.Count</span>
+            </button>
+        </li>
+
+    </ul>
+
+    <!-- TAB CONTENT -->
+    <div class="tab-content">
+
+        <!-- Pending -->
+        <div class="tab-pane fade show active" id="pendingTab">
+            @Html.Partial("_PackingPending", pending)
+        </div>
+
+        <!-- Packed -->
+        <div class="tab-pane fade" id="packedTab">
+            @Html.Partial("_Packed", packed)
+        </div>
+
+    </div>
+
+</div>
+@section Scripts{
+<script>
+
+    function savePacking(customer, order, pending, i, mode) {
+
+        let pcs = document.getElementById("pcs_" + i).value;
+        let date = document.getElementById("date_" + i).value;
+
+        if (!pcs || pcs <= 0)
+            return Swal.fire("Error", "Enter valid PCS", "error");
+
+        if (pcs > pending)
+            return Swal.fire("Warning", "Cannot exceed pending PCS", "warning");
+
+        if (!date)
+            return Swal.fire("Warning", "Enter dispatch date", "warning");
+
+        Swal.fire({
+            title: "Confirm Packing?",
+            icon: "question",
+            showCancelButton: true,
+            confirmButtonText: "Save"
+        }).then(res => {
+
+            if (!res.isConfirmed) return;
+
+            fetch('/Packing/SavePacking', {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({
+                    CustomerCode: customer,
+                    OrderNo: order,
+                    Pcs: pcs,
+                    Mode: mode,
+                    DespDate: date,
+                })
+            })
+            .then(r => r.json())
+            .then(d => {
+                Swal.fire("Success", d.message, "success")
+                    .then(()=>location.reload());
+            });
+
+        });
+    }
+
+
+   // ================= DELETE PACKING =================
+
+    function deletePackingOrder(id) {
+
+        Swal.fire({
+            title: "Delete packing?",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Delete"
+        }).then(res => {
+
+            if (!res.isConfirmed) return;
+
+            fetch('/Packing/DeletePackingOrder', {
+                method:'POST',
+                headers:{'Content-Type':'application/x-www-form-urlencoded'},
+                body:`id=${id}`
+            })
+            .then(r=>r.json())
+            .then(d=>{
+                Swal.fire(d.message)
+                    .then(()=>location.reload());
+            });
+
+        });
+    }
+        function printPacking() {
+
+        var printContents = document.getElementById("printArea").innerHTML;
+        var originalContents = document.body.innerHTML;
+
+        document.body.innerHTML = printContents;
+
+        window.print();
+
+        document.body.innerHTML = originalContents;
+
+        location.reload();
+    }
+</script>
+}

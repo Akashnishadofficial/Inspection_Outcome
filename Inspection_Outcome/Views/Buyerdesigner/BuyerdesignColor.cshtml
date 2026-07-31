@@ -1,0 +1,187 @@
+﻿@{
+    ViewData["Title"] = "BuyerdesignColor"; 
+}
+
+<div class="container-fluid mt-4">
+    <h4 class="fw-bold text-warning mb-2">Buyer Design Color Entry</h4>
+    <p class="text-muted mb-3">Fill all required design and buyer information</p>
+    <hr />
+    @if (ViewBag.Message != null)
+    {
+        <script>
+            Swal.fire({
+                icon: 'success',
+                title: 'Done!',
+                text: '@ViewBag.Message',
+                timer: 1500,
+                showConfirmButton: false
+            });
+        </script>
+    }
+    <form action="/Buyerdesigner/BuyerdesignColor" method="post" id="buyerForm" onsubmit="return confirmSave();">
+        <!-- BASIC INFO -->
+        <h6 class="text-secondary mt-3">Basic Information</h6>
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label fw-semibold">Buyer Code</label>
+                <!-- Visible search box -->
+                <input type="text"
+                       id="BuyerClientSearch"
+                       class="form-control"
+                       list="clientList"
+                       placeholder="Search by Client Name or Code" />
+                <!-- Hidden field (this will be saved in DB) -->
+                <input type="hidden" name="buyercode" id="BuyerCodeHidden" />
+
+                <datalist id="clientList">
+                    @foreach (var c in ViewBag.Clients)
+                    {
+                        <option value="@c.ClientName (@c.ClientCode)"
+                                data-code="@c.ClientCode">
+                        </option>
+                    }
+                </datalist>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-semibold">Design No</label>
+                <input type="text" class="form-control" name="designno" placeholder="Enter design No.">
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label fw-semibold">Quality</label>
+                <input type="text" class="form-control" name="quality" placeholder="Enter Quality">
+            </div>
+        </div>
+
+        <hr class="my-4">
+        <!-- DESIGN INFO -->
+        <h6 class="text-secondary">Design Details</h6>
+        <div class="row g-3">
+
+            <div class="col-md-3">
+                <label class="form-label fw-semibold">Collection</label>
+                <input type="text" class="form-control" name="Collection">
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label fw-semibold">Color</label>
+                <input type="text" class="form-control" name="colour">
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label fw-semibold">P-Design</label>
+                <input type="text" class="form-control" name="PDesign">
+            </div>
+        </div>
+
+        <hr class="my-4">
+        <!-- PROCESS -->
+        <h6 class="text-secondary">Processing Options</h6>
+        <div class="row g-2">
+            <div class="col-sm-2">              
+                <input type="checkbox" name="Latex" value="true" /> Latex
+            </div>
+            <div class="col-sm-2">           
+                <input type="checkbox" name="PattiMori" value="true" /> PattiMori
+            </div>
+            <div class="col-sm-2">              
+                <input type="checkbox" name="Streching" value="true" /> Streching
+            </div>
+            <div class="col-sm-2">              
+                <input type="checkbox" name="Clipping" value="true" /> Clipping
+            </div>
+            <div class="col-sm-2">             
+                <input type="checkbox" name="Washing" value="true" /> Washing
+            </div>
+            <div class="col-sm-2">              
+                <input type="checkbox" name="IiiBacking" value="true" /> IIIBacking
+            </div>
+            <div class="row g-2">
+            <div class="col-sm-2">                  
+                    <input type="checkbox" name="Embossing" value="true" /> Embossing
+            </div>
+            <div class="col-sm-2">               
+                    <input type="checkbox" name="Binding" value="true" /> Binding
+            </div>
+            <div class="col-sm-2">                  
+                    <input type="checkbox" name="Newar" value="true" /> Newar
+                </div>
+            </div>
+        </div>
+
+        <hr class="my-4">
+
+        <div class="d-flex justify-content-between align-items-center mt-4 p-3 border-top bg-light rounded">
+            <div class="text-muted small">
+                <i class="bi bi-info-circle"></i>
+                Please verify all details before saving.
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="reset" class="btn btn-outline-secondary px-4">
+                    Reset
+                </button>
+
+                <button type="submit" class="btn btn-success px-4 shadow-sm" id="btnSubmit">
+                    <i class="bi bi-check-circle me-1"></i> Save Record
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+    
+<script>
+    function confirmSave() {
+        // All required text fields
+        let fields = [
+            "buyercode",
+            "designno",
+            "quality",
+            "Collection",
+            "colour"  
+        ];
+
+        for (let i = 0; i < fields.length; i++) {
+            let el = document.getElementsByName(fields[i])[0];
+            if (el.value.trim() === "") {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Validation Error',
+                    text: fields[i] + " is required!"
+                });
+                el.focus();
+                return false; // stop submit
+            }
+        }
+        // If all valid, then confirmation
+        Swal.fire({
+            title: 'Save Record?',
+            text: 'Do you want to save this buyer design?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#198754',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, Save'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById("buyerForm").submit();
+            }
+        });
+
+        return false;
+        }  
+        $("#BuyerClientSearch").on("input", function ()
+        {
+        let enteredText = $(this).val();
+        let code = "";
+        $("#clientList option").each(function () {
+            if ($(this).val() === enteredText) {
+                code = $(this).data("code");
+            }
+        });
+
+        $("#BuyerCodeHidden").val(code);
+    });
+</script>
+
+

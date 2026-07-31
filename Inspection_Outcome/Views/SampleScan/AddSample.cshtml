@@ -1,0 +1,509 @@
+@{
+    ViewData["Title"] = "Scan Sample Entry";
+}
+
+<script src="~/js/zxing.min.js"></script>
+
+<style>
+    .field-filled {
+        border-color: #198754 !important;
+        background: #f6fef9 !important;
+    }
+
+    .video-wrap {
+        position: relative;
+        background: #000;
+        border-radius: 8px;
+        max-width: 360px;
+        overflow: hidden;
+        margin: 0 auto;
+    }
+
+    #barcodeVideo {
+        width: 100%;
+        display: block;
+        min-height: 120px;
+    }
+
+    .scan-line {
+        position: absolute;
+        left: 5%;
+        right: 5%;
+        height: 2px;
+        background: linear-gradient(90deg,transparent,#0d6efd,transparent);
+        box-shadow: 0 0 6px #0d6efd;
+        animation: scanMove 1.8s ease-in-out infinite;
+        display: none;
+    }
+
+    @@keyframes scanMove {
+        0%, 100% {
+            top: 10%
+        }
+
+        50% {
+            top: 85%
+        }
+    }
+
+    .vbracket {
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        border-color: #fff;
+        border-style: solid;
+    }
+
+        .vbracket.tl {
+            top: 7px;
+            left: 7px;
+            border-width: 2px 0 0 2px
+        }
+
+        .vbracket.tr {
+            top: 7px;
+            right: 7px;
+            border-width: 2px 2px 0 0
+        }
+
+        .vbracket.bl {
+            bottom: 7px;
+            left: 7px;
+            border-width: 0 0 2px 2px
+        }
+
+        .vbracket.br {
+            bottom: 7px;
+            right: 7px;
+            border-width: 0 2px 2px 0
+        }
+
+    .swal2-container.swal2-top-end {
+        top: 60px !important;
+    }
+
+    /* Scanner panel */
+    .scan-panel {
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0,0,0,.08);
+        border: 1px solid #e9ecef;
+        margin-bottom: 16px;
+        overflow: hidden;
+    }
+
+    .scan-panel-top {
+        background: #2c3e50;
+        padding: 20px;
+        text-align: center;
+    }
+
+        .scan-panel-top h5 {
+            color: #fff;
+            font-weight: 700;
+            margin-bottom: 4px;
+            letter-spacing: .5px;
+        }
+
+        .scan-panel-top p {
+            color: #adb5bd;
+            font-size: .8rem;
+            margin: 0;
+        }
+
+    /* Animated barcode lines */
+    .barcode-anim {
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        gap: 3px;
+        height: 50px;
+        margin: 16px auto 12px;
+        width: 120px;
+    }
+
+        .barcode-anim span {
+            display: inline-block;
+            width: 4px;
+            background: #0d6efd;
+            border-radius: 2px;
+            animation: barPulse 1.2s ease-in-out infinite;
+        }
+
+            .barcode-anim span:nth-child(1) {
+                height: 30px;
+                animation-delay: 0s
+            }
+
+            .barcode-anim span:nth-child(2) {
+                height: 45px;
+                animation-delay: .1s;
+                width: 7px
+            }
+
+            .barcode-anim span:nth-child(3) {
+                height: 20px;
+                animation-delay: .2s
+            }
+
+            .barcode-anim span:nth-child(4) {
+                height: 40px;
+                animation-delay: .3s;
+                width: 7px
+            }
+
+            .barcode-anim span:nth-child(5) {
+                height: 35px;
+                animation-delay: .1s
+            }
+
+            .barcode-anim span:nth-child(6) {
+                height: 50px;
+                animation-delay: .2s;
+                width: 5px
+            }
+
+            .barcode-anim span:nth-child(7) {
+                height: 25px;
+                animation-delay: .3s
+            }
+
+            .barcode-anim span:nth-child(8) {
+                height: 45px;
+                animation-delay: .0s;
+                width: 7px
+            }
+
+            .barcode-anim span:nth-child(9) {
+                height: 30px;
+                animation-delay: .1s
+            }
+
+            .barcode-anim span:nth-child(10) {
+                height: 40px;
+                animation-delay: .2s
+            }
+
+    @@keyframes barPulse {
+        0%, 100% {
+            opacity: 1;
+            transform: scaleY(1);
+        }
+
+        50% {
+            opacity: .4;
+            transform: scaleY(.6);
+        }
+    }
+
+    .scan-input-wrap {
+        padding: 16px 20px 20px;
+        background: #f8f9fa;
+        border-top: 1px solid #e9ecef;
+    }
+
+    /* Status dot */
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 5px;
+    }
+
+        .status-dot.waiting {
+            background: #fd7e14;
+            animation: pulse 1.5s infinite;
+        }
+
+        .status-dot.ready {
+            background: #198754;
+        }
+
+    @@keyframes pulse {
+        0%, 100% {
+            opacity: 1
+        }
+
+        50% {
+            opacity: .3
+        }
+    }
+</style>
+
+<!-- ══ SCANNER PANEL ══ -->
+<div class="scan-panel">
+
+    <!-- Top dark header -->
+    <div class="scan-panel-top">
+        <div class="text-center py-3">
+            <i class="fa fa-barcode fa-3x text-primary mb-2"></i>
+            <h5 class="text-white fw-bold mb-1">Sample Godown Entry</h5>
+            <p class="text-secondary mb-3" style="font-size:.82rem;">Scan barcode to auto-fill entry details</p>
+
+            <!-- Animated barcode bars -->
+            <div class="barcode-anim mx-auto mb-3" id="idleAnim">
+                <span></span><span></span><span></span><span></span><span></span>
+                <span></span><span></span><span></span><span></span><span></span>
+            </div>
+
+            <!-- Mode toggle -->
+            <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-primary" id="btnCamera" onclick="setMode('camera')">
+                    <i class="fa fa-camera me-1"></i>Camera
+                </button>
+                <button class="btn btn-primary" id="btnHandheld" onclick="setMode('handheld')">
+                    <i class="fa fa-keyboard me-1"></i>Handheld
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Input area -->
+    <div class="scan-input-wrap">
+
+        <!-- Handheld -->
+        <div id="handheldSection">
+            <label class="form-label small fw-semibold text-secondary text-uppercase" style="letter-spacing:.6px;">Barcode Value</label>
+            <div class="input-group">
+                <span class="input-group-text bg-white"><i class="fa fa-barcode text-primary"></i></span>
+                <input id="handheldInput" class="form-control" placeholder="Scan or type barcode…" autocomplete="off">
+                <button class="btn btn-primary" onclick="processHandheld()"><i class="fa fa-search me-1"></i>Lookup</button>
+            </div>
+            <div id="handheldResult" class="mt-2" style="display:none;">
+                <span class="badge bg-success px-3 py-2"><i class="fa fa-check-circle me-1"></i><span id="handheldResultText"></span></span>
+            </div>
+        </div>
+
+        <!-- Camera -->
+        <div id="cameraSection" style="display:none;">
+            <select id="cameraSelect" class="form-select form-select-sm mb-2" style="max-width:240px;"></select>
+            <div class="video-wrap mb-2">
+                <video id="barcodeVideo" playsinline></video>
+                <div class="scan-line" id="scanLine"></div>
+                <div class="vbracket tl"></div><div class="vbracket tr"></div>
+                <div class="vbracket bl"></div><div class="vbracket br"></div>
+            </div>
+            <button type="button" class="btn btn-primary btn-sm me-2" id="btnStart" onclick="startCamera()"><i class="fa fa-play me-1"></i>Start</button>
+            <button type="button" class="btn btn-outline-danger btn-sm" id="btnStop" style="display:none;" onclick="stopCamera()"><i class="fa fa-stop me-1"></i>Stop</button>
+            <div id="camResult" class="mt-2" style="display:none;">
+                <span class="badge bg-success px-3 py-2"><i class="fa fa-check-circle me-1"></i><span id="camResultText"></span></span>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ══ FORM CARD ══ -->
+<div class="card shadow-sm border-0" style="border-radius:12px;overflow:hidden;">
+    <div class="card-header bg-white border-bottom d-flex align-items-center justify-content-between py-2 px-3">
+        <span class="fw-semibold"><i class="fa fa-clipboard-list me-2 text-primary"></i>Entry Details</span>
+        <span id="scanStatusBadge" style="font-size:.75rem;padding:4px 10px;border-radius:20px;background:#fff3e0;color:#e65100;border:1px solid #ffd8a8;font-weight:600;">
+            <span class="status-dot waiting" id="statusDot"></span>
+            <span id="scanStatusText">Waiting for scan…</span>
+        </span>
+    </div>
+
+    <div class="card-body px-3 py-3">
+        <form id="mainForm">
+
+            <!-- Auto-fill section -->
+            <div class="d-flex align-items-center mb-2">
+                <div style="width:3px;height:16px;background:#0d6efd;border-radius:2px;margin-right:8px;"></div>
+                <span style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#0d6efd;">Auto-filled from Barcode</span>
+            </div>
+
+            <div class="row g-2 mb-2">
+                <div class="col-md-3">
+                    <label class="form-label small fw-semibold text-muted mb-1">Sample No</label>
+                    <input id="SampleNo" name="SampleNo" class="form-control form-control-sm" readonly placeholder="—">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold text-muted mb-1">Customer No</label>
+                    <input id="CustomerNo" name="CustomerNo" class="form-control form-control-sm" readonly placeholder="—">
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label small fw-semibold text-muted mb-1">Project Name</label>
+                    <input id="ProjectName" name="ProjectName" class="form-control form-control-sm" readonly placeholder="—">
+                </div>
+            </div>
+            <div class="row g-2 mb-3">
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold text-muted mb-1">Quality</label>
+                    <input id="Quality" name="Quality" class="form-control form-control-sm" readonly placeholder="—">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold text-muted mb-1">Design</label>
+                    <input id="Design" name="Design" class="form-control form-control-sm" readonly placeholder="—">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold text-muted mb-1">Material</label>
+                    <input id="Matrial" name="Matrial" class="form-control form-control-sm" readonly placeholder="—">
+                </div>
+            </div>
+
+            <hr class="my-2">
+
+            <!-- Manual section -->
+            <div class="d-flex align-items-center mb-2">
+                <div style="width:3px;height:16px;background:#fd7e14;border-radius:2px;margin-right:8px;"></div>
+                <span style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#fd7e14;">Manually Fill</span>
+            </div>
+
+            <div class="row g-2 mb-3">
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold text-muted mb-1">Godown No <span class="text-danger">*</span></label>
+                    <select id="GodownNo" name="GodownNo" class="form-select form-select-sm" required>
+                        <option value="">-- Select Godown --</option>
+                        <option value="01">Godown No. 1</option>
+                        <option value="02">Godown No. 2</option>
+                        <option value="03">Godown No. 3</option>
+                        <option value="04">Godown No. 4</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold text-muted mb-1">Rack No <span class="text-danger">*</span></label>
+                    <input id="RackNo" name="RackNo" class="form-control form-control-sm" placeholder="e.g. R-3" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold text-muted mb-1">Bale No <span class="text-danger">*</span></label>
+                    <input id="BaleNo" name="BaleNo" class="form-control form-control-sm" placeholder="e.g. B-12" required>
+                </div>
+            </div>
+
+            <div class="text-center pt-1">
+                <button type="button" class="btn btn-primary px-5 me-2" onclick="saveEntry()">
+                    <i class="fa fa-save me-1"></i>Save Entry
+                </button>
+                <a href="/Sample/ShowSample" class="btn btn-outline-secondary px-4">
+                    <i class="fa fa-arrow-left me-1"></i>Back
+                </a>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+<script>
+    let codeReader = null, scanning = false;
+
+    const toast = (icon, title, timer = 3000) => Swal.fire({
+        toast: true, position: 'top-end', icon, title,
+        showConfirmButton: false, timer, timerProgressBar: true
+    });
+
+    async function populateCameras() {
+        try {
+            await navigator.mediaDevices.getUserMedia({ video: true });
+            const devices = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === 'videoinput');
+            const sel = $('#cameraSelect').empty();
+            if (!devices.length) { sel.append('<option>No camera found</option>'); $('#btnStart').prop('disabled', true); return; }
+            devices.forEach((d, i) => sel.append(`<option value="${d.deviceId}">${d.label || 'Camera ' + (i + 1)}</option>`));
+        } catch (err) {
+            toast('error', err.name === 'NotAllowedError' ? 'Camera permission denied' : 'Camera error: ' + err.message, 4000);
+            $('#btnStart').prop('disabled', true);
+        }
+    }
+
+    function startCamera() {
+        if (scanning) return;
+        codeReader = new ZXing.BrowserMultiFormatReader(); scanning = true;
+        const deviceId = $('#cameraSelect').val();
+        const constraints = deviceId ? { video: { deviceId: { exact: deviceId } } } : { video: { facingMode: 'environment' } };
+        $('#btnStart').hide(); $('#btnStop').show(); $('#scanLine').show(); $('#camResult').hide();
+        navigator.mediaDevices.getUserMedia(constraints).then(stream => {
+            const v = document.getElementById('barcodeVideo'); v.srcObject = stream; v.play();
+            codeReader.decodeFromStream(stream, v, (result) => {
+                if (result) { const code = result.getText(); stopCamera(); $('#camResultText').text(code); $('#camResult').fadeIn(); callScanBarcode(code); }
+            });
+        }).catch(err => { scanning = false; stopCamera(); toast('error', 'Camera failed: ' + err.message, 3500); });
+    }
+
+    function stopCamera() {
+        const v = document.getElementById('barcodeVideo');
+        if (v && v.srcObject) { v.srcObject.getTracks().forEach(t => t.stop()); v.srcObject = null; }
+        if (codeReader) { try { codeReader.reset(); } catch (e) { } codeReader = null; }
+        scanning = false; $('#btnStart').show(); $('#btnStop').hide(); $('#scanLine').hide();
+    }
+
+    function setMode(mode) {
+        $('#idleAnim').toggle(mode === 'idle');
+        if (mode === 'camera') {
+            $('#cameraSection').show(); $('#handheldSection').hide();
+            $('#btnCamera').removeClass('btn-outline-light').addClass('btn-light');
+            $('#btnHandheld').removeClass('btn-primary').addClass('btn-outline-light');
+        } else {
+            stopCamera(); $('#handheldSection').show(); $('#cameraSection').hide();
+            $('#btnHandheld').removeClass('btn-outline-light').addClass('btn-primary');
+            $('#btnCamera').removeClass('btn-light').addClass('btn-outline-light');
+            setTimeout(() => $('#handheldInput').focus(), 80);
+        }
+    }
+
+    $('#handheldInput').on('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); processHandheld(); } });
+
+    function processHandheld() {
+        const code = $('#handheldInput').val().trim(); if (!code) return;
+        $('#handheldResultText').text(code); $('#handheldResult').fadeIn();
+        $('#handheldInput').val('').focus(); callScanBarcode(code);
+    }
+
+    function callScanBarcode(barcode) {
+        $.get('/SampleScan/ScanBarcode', { barcode }, function (res) {
+            if (!res.success) { toast('error', res.message || 'Invalid barcode'); clearAutoFields(); return; }
+            const d = res.data;
+            $('#SampleNo').val(d.sampleNo).addClass('field-filled');
+            $('#CustomerNo').val(d.customerNo).addClass('field-filled');
+            $('#ProjectName').val(d.projectName).addClass('field-filled');
+            $('#Quality').val(d.quality).addClass('field-filled');
+            $('#Design').val(d.design).addClass('field-filled');
+            $('#Matrial').val(d.matrial).addClass('field-filled');
+            $('#scanStatusBadge').css({ background: '#d1fae5', color: '#065f46', border: '1px solid #6ee7b7' });
+            $('#statusDot').removeClass('waiting').addClass('ready');
+            $('#scanStatusText').text('Sample: ' + d.sampleNo);
+            playBeep();
+            toast('success', 'Sample loaded ✓', 2000);
+            setTimeout(() => $('#GodownNo').focus(), 300);
+        }).fail(() => toast('error', 'Server error, try again'));
+    }
+
+    function saveEntry() {
+        if (!$('#SampleNo').val()) { toast('warning', 'Scan barcode first'); return; }
+        if (!$('#GodownNo').val()) { toast('warning', 'Select Godown'); return; }
+        if (!$('#RackNo').val() || !$('#BaleNo').val()) { toast('warning', 'Enter Rack No and Bale No'); return; }
+        $.ajax({
+            url: '/SampleScan/SaveGodownEntry', type: 'POST',
+            data: { SampleNo: $('#SampleNo').val(), CustomerNo: $('#CustomerNo').val(), ProjectName: $('#ProjectName').val(), Quality: $('#Quality').val(), Design: $('#Design').val(), Matrial: $('#Matrial').val(), GodownNo: $('#GodownNo').val(), RackNo: $('#RackNo').val(), BaleNo: $('#BaleNo').val() },
+            success: function (res) {
+                if (res.success) { toast('success', 'Saved ✓', 2500); resetForm(); }
+                else { toast('error', res.message, 3500); }
+            },
+            error: () => toast('error', 'Server error')
+        });
+    }
+
+    function clearAutoFields() {
+        $('#SampleNo,#CustomerNo,#ProjectName,#Quality,#Design,#Matrial').val('').removeClass('field-filled');
+        $('#scanStatusBadge').css({ background: '#fff3e0', color: '#e65100', border: '1px solid #ffd8a8' });
+        $('#statusDot').removeClass('ready').addClass('waiting');
+        $('#scanStatusText').text('Waiting for scan…');
+    }
+
+    function resetForm() {
+        clearAutoFields();
+        $('#GodownNo,#RackNo,#BaleNo').val('');
+        $('#camResult,#handheldResult').hide();
+        setMode('handheld');
+    }
+
+    function playBeep() {
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)(), o = ctx.createOscillator(), g = ctx.createGain();
+            o.connect(g); g.connect(ctx.destination); o.frequency.value = 900;
+            g.gain.setValueAtTime(.3, ctx.currentTime); g.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + .15);
+            o.start(); o.stop(ctx.currentTime + .15);
+        } catch { }
+    }
+
+    $(document).ready(() => { populateCameras(); setMode('handheld'); });
+</script>

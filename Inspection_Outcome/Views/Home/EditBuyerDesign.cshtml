@@ -1,0 +1,178 @@
+﻿@model Inspection_Outcome.Models.Tblbuyerdesigncolor
+@{
+    ViewData["Title"] = "Edit Buyer Design";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .page-shell {
+        background: #ffffff;
+        border-radius: 14px;
+        padding: 18px;
+        box-shadow: 0 8px 24px rgba(0,0,0,.05);
+    }
+
+    .page-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #0d6efd;
+    }
+
+    .hint {
+        font-size: 14px;
+        color: #6c757d;
+    }
+
+    .form-label {
+        font-size: 15px;
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
+
+    .form-control {
+        font-size: 17px;
+        padding: 7px 10px;
+        border-radius: 10px;
+    }
+
+        .form-control:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 3px rgba(13,110,253,.15);
+        }
+
+    .readonly {
+        background-color: #f1f3f5;
+        color: #495057;
+        cursor: not-allowed;
+    }
+
+    .divider {
+        border-top: 1px dashed #dee2e6;
+        margin: 14px 0;
+    }
+
+    .action-bar {
+        position: sticky;
+        bottom: 0;
+        background: #ffffff;
+        border-top: 1px solid #e9ecef;
+        padding: 12px;
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+    }
+
+    @@media (max-width: 576px) {
+        .action-bar
+
+    {
+        flex-direction: column;
+    }
+
+    .action-bar button,
+    .action-bar a {
+        width: 100%;
+    }
+
+    }
+</style>
+
+<div class="container-fluid mt-3">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <div>
+            <div class="page-title">
+                <i class="bi bi-pencil-square"></i> Edit Buyer Design
+            </div>
+            <div class="hint">Update only required fields</div>
+        </div>
+
+        <a asp-action="ShowBuyerdesign" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-x-lg"></i>
+        </a>
+    </div>
+
+    <div class="page-shell">
+
+        <form asp-action="EditBuyerDesign" method="post">
+
+            <input type="hidden" asp-for="Id" />
+
+            <!-- READONLY SECTION -->
+            <div class="row g-3">
+                <div class="col-12 col-sm-6 col-md-4">
+                    <label class="form-label">Buyer Number</label>
+                    <input asp-for="Bno" class="form-control readonly" readonly />
+                </div>
+
+                <div class="col-12 col-sm-6 col-md-4">
+                    <label class="form-label">Buyer Code</label>
+                    <input asp-for="Buyercode" class="form-control readonly" readonly />
+                </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- EDITABLE SECTION -->
+            <div class="row g-3">
+
+                <div class="col-12 col-sm-6 col-md-4">
+                    <label class="form-label">Design No</label>
+                    <input asp-for="Designno" class="form-control" />
+                </div>
+
+                <div class="col-12 col-sm-6 col-md-4">
+                    <label class="form-label">Quality</label>
+                    <input asp-for="Quality" class="form-control" />
+                </div>
+
+                <div class="col-12 col-sm-6 col-md-4">
+                    <label class="form-label">Colour</label>
+                    <input asp-for="Colour" class="form-control" />
+                </div>
+
+                <div class="col-12 col-sm-6 col-md-4">
+                    <label class="form-label">Collection</label>
+                    <input asp-for="Collection" class="form-control" />
+                </div>
+
+                <div class="col-12 col-sm-6 col-md-4">
+                    <label class="form-label">PDesign</label>
+                    <input asp-for="Pdesign" class="form-control" />
+                </div>
+
+            </div>
+
+            <!-- ACTION BAR -->
+            <div class="action-bar mt-3">
+                <button type="button" id="btnUpdateConfirm" class="btn btn-success">
+                    <i class="bi bi-check-circle"></i> Save Changes
+                </button>
+
+                <a asp-action="ShowBuyerdesign" class="btn btn-outline-secondary">
+                    Cancel
+                </a>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+<script>
+    document.getElementById("btnUpdateConfirm").addEventListener("click", function () {
+        Swal.fire({
+            title: 'Confirm Update',
+            text: "Save changes to this record?",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#198754',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, Save'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.querySelector("form").submit();
+            }
+        });
+    });
+</script>

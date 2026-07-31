@@ -1,0 +1,262 @@
+﻿@{
+    ViewData["Title"] = "Show Manual Sample";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    body {
+        background: #f4f6f9;
+    }
+
+    label {
+        font-weight: 600;
+    }
+
+    table th, table td {
+        white-space: nowrap;
+        vertical-align: middle;
+    }
+</style>
+
+<div class="container mt-4">
+    <h3 class="text-center mb-3">📋 Show Manual Sample (Godown)</h3>
+
+    @* MESSAGE *@
+    @if (TempData["Message"] != null)
+    {
+        <script>
+            Swal.fire({
+                icon: '@(TempData["Message"].ToString().ToLower().Contains("error") ? "error" : "success")',
+                title: 'Message',
+                text: '@TempData["Message"]'
+            });
+        </script>
+    }
+
+    <!-- SAMPLE NO SEARCH -->
+    <div class="mb-3">
+        <label>Sample No</label>
+        <input type="text"
+               id="SampleNo"
+               class="form-control"
+               list="sampleNoList"
+               placeholder="Select / type Sample No" />
+        <datalist id="sampleNoList"></datalist>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped" id="resultTable">
+            <thead class="table-dark">
+                <tr>
+                    <th>#</th>
+                    <th>Sample No</th>
+                    <th>Customer No</th>
+                    <th>Project Name</th>
+                    <th>Quality</th>
+                    <th>Design</th>
+                    <th>Material</th>
+                    <th>Godown</th>
+                    <th>Rack</th>
+                    <th>Bale No</th>
+                    <th>Entry Date</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td colspan="12" class="text-center">
+                        Select Sample No to view data
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- PAGINATION -->
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <button class="btn btn-secondary btn-sm" id="prevPage">⬅ Previous</button>
+            <span id="pageInfo" class="fw-bold"></span>
+            <button class="btn btn-secondary btn-sm" id="nextPage">Next ➡</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let allData = [];
+    let currentPage = 1;
+    let pageSize = 10;
+
+    // =========================
+    // PAGE LOAD
+    // =========================
+    $(document).ready(function () {
+
+        loadLatest();
+
+        // sample no list
+        $.get('/Sample/GetGodownSampleNoList', function (list) {
+            let opt = '';
+            $.each(list, function (i, v) {
+                opt += `<option value="${v}"></option>`;
+            });
+            $("#sampleNoList").html(opt);
+        });
+
+        // sample change
+        $("#SampleNo").on("change blur", function () {
+
+            let sampleNo = $(this).val().trim();
+
+            if (!sampleNo) {
+                allData = [];
+                renderTable();
+                return;
+            }
+
+            $.get('/Sample/GetGodownDataBySampleNo',
+                { sampleNo: sampleNo },
+                function (res) {
+
+                    allData = (res.success && res.data) ? res.data : [];
+                    currentPage = 1;
+                    renderTable();
+                });
+        });
+
+        // pagination
+        $("#prevPage").click(function () {
+            if (currentPage > 1) {
+                currentPage--;
+                renderTable();
+            }
+        });
+
+        $("#nextPage").click(function () {
+            let totalPages = Math.ceil(allData.length / pageSize);
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderTable();
+            }
+        });
+    });
+
+    // =========================
+    // LOAD LATEST DATA
+    // =========================
+    function loadLatest() {
+        $.get("/Sample/GetDataSample", function (data) {
+            allData = data || [];
+            currentPage = 1;
+            renderTable();
+        });
+    }
+
+    // =========================
+    // RENDER TABLE
+    // =========================
+    function renderTable() {
+
+        let tbody = $("#resultTable tbody");
+        tbody.empty();
+
+        if (allData.length === 0) {
+            tbody.append(`
+                <tr>
+                    <td colspan="12" class="text-center text-danger">
+                        No data found
+                    </td>
+                </tr>
+            `);
+            $("#pageInfo").text('');
+            $("#prevPage,#nextPage").prop("disabled", true);
+            return;
+        }
+
+        let start = (currentPage - 1) * pageSize;
+        let end = start + pageSize;
+        let pageData = allData.slice(start, end);
+
+        $.each(pageData, function (i, row) {
+
+            let entryDate = row.entryDate
+                ? new Date(row.entryDate).toLocaleString()
+                : '';
+
+            tbody.append(`
+                <tr>
+                    <td>${start + i + 1}</td>
+                    <td>${row.sampleNo ?? ''}</td>
+                    <td>${row.customerNo ?? ''}</td>
+                    <td>${row.projectName ?? ''}</td>
+                    <td>${row.quality ?? ''}</td>
+                    <td>${row.design ?? ''}</td>
+                    <td>${row.matrial ?? ''}</td>
+                    <td>${row.godownNo ?? ''}</td>
+                    <td>${row.rackNo ?? ''}</td>
+                    <td>${row.baleNo ?? ''}</td>
+                    <td>${entryDate}</td>
+                    <td>
+                        <button class="btn btn-sm btn-warning"
+                                onclick="editRow(${row.id})">✏️ Edit</button>
+                        <button class="btn btn-sm btn-danger ms-1"
+                                onclick="deleteRow(${row.id})">🗑️ Delete</button>
+                    </td>
+                </tr>
+            `);
+        });
+
+        let totalPages = Math.ceil(allData.length / pageSize);
+        $("#pageInfo").text(`Page ${currentPage} of ${totalPages}`);
+        $("#prevPage").prop("disabled", currentPage === 1);
+        $("#nextPage").prop("disabled", currentPage === totalPages);
+    }
+
+    // =========================
+    // EDIT
+    // =========================
+    function editRow(id) {
+        window.location.href = '/Sample/EditGodown/' + id;
+    }
+
+    // =========================
+    // DELETE
+    // =========================
+    function deleteRow(id) {
+
+        Swal.fire({
+            title: 'Are you sure?',
+            text: 'This record will be permanently deleted!',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, Delete',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+
+            if (result.isConfirmed) {
+
+                $.post('/Sample/DeleteGodown', { id: id }, function (res) {
+
+                    if (res.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Deleted',
+                            text: res.message,
+                            timer: 1200,
+                            showConfirmButton: false
+                        });
+
+                        $("#SampleNo").trigger("change");
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: res.message
+                        });
+                    }
+                });
+            }
+        });
+    }
+</script>

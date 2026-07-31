@@ -1,0 +1,276 @@
+﻿
+@{
+    ViewData["Title"] = "ShowBuyerdesign";
+   
+}
+<style>
+    .filter-bar {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 12px;
+        margin-bottom: 12px;
+    }
+
+        .filter-bar label {
+            font-size: 17px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+    .table thead th {
+        font-size: 17px;
+        white-space: nowrap;
+    }
+
+    .table tbody td {
+        font-size: 17px;
+        vertical-align: middle;
+        white-space: nowrap;
+    }
+
+    .action-btn {
+        padding: 4px 8px;
+        font-size: 16px;
+    }
+
+    @@media (max-width: 576px) {
+        .table-responsive {
+            border: none;
+        }
+    }
+</style>
+
+<div class="container-fluid mt-3">
+    <!-- SUCCESS ALERT -->
+    @if (TempData["UpdateSuccess"] != null)
+    {
+        <script>
+            Swal.fire({
+                icon: 'success',
+                title: 'Done!',
+                text: '@TempData["UpdateSuccess"]',
+                timer: 1500,
+                showConfirmButton: false
+            });
+        </script>
+    }
+    <!-- FILTER BAR -->
+    <div class="filter-bar">
+        <div class="row g-2 align-items-end">
+            <div class="col-12 col-sm-6 col-md-3">
+                <label>Buyer</label>
+                <!-- Visible search -->
+                <input type="text"
+                       id="BuyerSearch"
+                       class="form-control form-control-sm"
+                       list="clientList"
+                       placeholder="Search Client Name / Code" />
+                <!-- Hidden field (actual filter value) -->
+                <input type="hidden" id="BuyerCode" />
+                <datalist id="clientList">
+                    @foreach (var c in ViewBag.Clients)
+                    {
+                        <option value="@c.ClientName (@c.ClientCode)"
+                                data-code="@c.ClientCode"></option>
+                    }
+                </datalist>
+            </div>
+            <div class="col-12 col-md-2">
+                <button id="btnShow" class="btn btn-primary btn-sm w-100">
+                    Show
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle" id="resultTable">
+            <thead class="table-light">
+                <tr>
+                    <th>BuyerCode</th>
+                    <th>Design</th>
+                    <th>Quality</th>
+                    <th>Colour</th>
+                    <th>Collection</th>
+                    <th>PDesign</th>
+                    <th>Latex</th>
+                    <th>Berai</th>
+                    <th>Streching</th>
+                    <th>PattiMori</th>
+                    <th>Clipping</th>
+                    <th>Washing</th>
+                    <th>IIIBacking</th>
+                    <th>Embossing</th>
+                    <th>Binding</th>
+                    <th>Newar</th>
+                    <th class="text-center">Action</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>  
+    </div>
+    <div class="d-flex justify-content-between align-items-center mt-3" id="pager">
+        <button class="btn btn-outline-primary btn-sm" id="btnPrev">Previous</button>
+        <span class="fw-semibold" id="pageInfo">Page 1</span>
+        <button class="btn btn-outline-primary btn-sm" id="btnNext">Next</button>
+    </div>
+</div>
+<script>
+     // PAGE LOAD PAR LATEST 20 DATA
+    $(document).ready(function () {
+        $.get("/Buyerdesigner/GetLatestBuyerDesigns", function (data) {
+            allData = data;
+            currentPage = 1;
+            renderTable();
+        });
+    });
+    // YES / NO helper
+    function yn(val) {
+        return val === true ? "YES" : "NO";
+    }
+    // ======================
+    // CLIENT SEARCH (Name + Code) → Hidden Code
+    // ======================
+    $("#BuyerSearch").on("input", function () {
+
+        let text = $(this).val();
+        let code = "";
+
+        $("#clientList option").each(function () {
+            if ($(this).val() === text) {
+                code = $(this).data("code");
+            }
+        });
+
+        $("#BuyerCode").val(code);
+    });
+    // Prevent invalid manual typing
+    $("#BuyerSearch").blur(function () {
+        if ($("#BuyerCode").val() === "") {
+            $(this).val("");
+        }
+    });
+    // ======================
+    // SHOW BUTTON
+    // ======================
+    $("#btnShow").click(function () {
+        let code = $("#BuyerCode").val();
+
+        if(code === "") {
+            Swal.fire("Please select client from list");
+            return;
+        }
+        $.get("/Buyerdesigner/GetBuyerDetails",
+            { buyercode: code },
+            function (data) {
+                allData = data;
+                currentPage = 1;
+                renderTable();
+            });
+    });
+
+    // ======================
+    // PAGING VARIABLES
+    // ======================
+    let allData = [];
+    let currentPage = 1;
+    let pageSize = 10;
+
+    // ======================
+    // RENDER TABLE
+    // ======================
+    function renderTable() {
+        let tbody = $("#resultTable tbody");
+        tbody.empty();
+        let start = (currentPage - 1) * pageSize;
+        let end = start + pageSize;
+        let pageData = allData.slice(start, end);
+        $.each(pageData, function (i, item) {
+            tbody.append(`
+                <tr>
+                    <td>${item.buyercode}</td>
+                    <td>${item.designNo}</td>
+                    <td>${item.quality}</td>
+                    <td>${item.colour}</td>
+                    <td>${item.collection}</td>
+                    <td>${item.pdesign}</td>
+                    <td>${yn(item.latex)}</td>
+                    <td>${yn(item.berai)}</td>
+                    <td>${yn(item.streching)}</td>
+                    <td>${yn(item.pattiMori)}</td>
+                    <td>${yn(item.clipping)}</td>
+                    <td>${yn(item.washing)}</td>
+                    <td>${yn(item.iiibacking)}</td>
+                    <td>${yn(item.embossing)}</td>
+                    <td>${yn(item.binding)}</td>
+                    <td>${yn(item.newar)}</td>
+                    <td class="text-center">
+                        <button class="btn btn-warning btn-sm btnUpdate" data-id="${item.id}">Edit</button>
+                        <button class="btn btn-danger btn-sm btnDelete" data-id="${item.id}">Del</button>
+                    </td>
+                </tr>
+            `);
+        });
+        let totalPages = Math.ceil(allData.length / pageSize);
+        $("#pageInfo").text(`Page ${currentPage} of ${totalPages}`);
+        $("#btnPrev").prop("disabled", currentPage === 1);
+        $("#btnNext").prop("disabled", currentPage === totalPages || totalPages === 0);
+    }
+    // ======================
+    // PAGINATION
+    // ======================
+    $("#btnNext").click(function () {
+        currentPage++;
+        renderTable();
+    });
+    $("#btnPrev").click(function () {
+        currentPage--;
+        renderTable();
+    });
+    // ======================
+    // UPDATE
+    // ======================
+    $(document).on("click", ".btnUpdate", function () {
+        let id = $(this).data("id");
+        Swal.fire({
+            title: 'Update record?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Yes'
+        }).then(r => {
+            if (r.isConfirmed) {
+                location.href = "/Buyerdesigner/EditBuyerDesign/" + id;
+            }
+        });
+    });
+    // ======================
+    // DELETE
+    // ======================
+    $(document).on("click", ".btnDelete", function () {
+        let id = $(this).data("id");
+        Swal.fire({
+            title: 'Delete permanently?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Delete'
+        }).then(r => {
+            if (r.isConfirmed) {
+                $.post("/Buyerdesigner/DeleteBuyerDesign",
+                    { id: id },
+                    function () {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Deleted',
+                            timer: 1200,
+                            showConfirmButton: false
+                        });
+                        $("#btnShow").click();
+                    });
+            }
+        });
+    });
+
+</script>

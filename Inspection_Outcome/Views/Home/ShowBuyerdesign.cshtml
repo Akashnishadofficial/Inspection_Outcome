@@ -1,0 +1,191 @@
+﻿@{
+    ViewData["Title"] = "ShowBuyerdesign";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .filter-bar {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 12px;
+        margin-bottom: 12px;
+    }
+
+        .filter-bar label {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+    .table thead th {
+        font-size: 16px;
+        white-space: nowrap;
+    }
+
+    .table tbody td {
+        font-size: 17px;
+        vertical-align: middle;
+        white-space: nowrap;
+    }
+
+    .action-btn {
+        padding: 4px 8px;
+        font-size: 16px;
+    }
+
+    @@media (max-width: 576px) {
+        .table-responsive
+
+    {
+        border: none;
+    }
+
+    }
+</style>
+
+<div class="container-fluid mt-3">
+
+    <!-- SUCCESS ALERT -->
+    @if (TempData["UpdateSuccess"] != null)
+    {
+        <script>
+            Swal.fire({
+                icon: 'success',
+                title: 'Done!',
+                text: '@TempData["UpdateSuccess"]',
+                timer: 1500,
+                showConfirmButton: false
+            });
+        </script>
+    }
+
+    <!-- FILTER BAR -->
+    <div class="filter-bar">
+        <div class="row g-2 align-items-end">
+
+            <div class="col-12 col-sm-6 col-md-3">
+                <label>Buyer Number</label>
+                <select id="BuyerNumber" class="form-control form-control-sm">
+                    <option value="">Select Buyer Number</option>
+                    @foreach (var b in ViewBag.BuyerNumbers)
+                    {
+                        <option value="@b">@b</option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-12 col-sm-6 col-md-3">
+                <label>Buyer Code</label>
+                <select id="BuyerCode" class="form-control form-control-sm">
+                    <option value="">Select Buyer Code</option>
+                </select>
+            </div>
+
+            <div class="col-12 col-md-2">
+                <button id="btnShow" class="btn btn-primary btn-sm w-100">
+                    Show
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle" id="resultTable">
+            <thead class="table-light">
+                <tr>
+                    <th>Bno</th>
+                    <th>BuyerCode</th>
+                    <th>Design</th>
+                    <th>Quality</th>
+                    <th>Colour</th>
+                    <th>Collection</th>
+                    <th>PDesign</th>
+                    <th class="text-center">Action</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+</div>
+<script>
+    // Buyer Number change
+    $("#BuyerNumber").change(function () {
+        var buyerNo = $(this).val();
+        $("#BuyerCode").html('<option>Loading...</option>');
+
+        $.get("/Buyerdesigner/GetBuyerCodes", { bno: buyerNo }, function (data) {
+            $("#BuyerCode").html('<option value="">Select Buyer Code</option>');
+            $.each(data, function (i, v) {
+                $("#BuyerCode").append(`<option value="${v}">${v}</option>`);
+            });
+        });
+    });
+
+    // Show data
+    $("#btnShow").click(function () {
+        $.get("/Buyerdesigner/GetBuyerDetails", {
+            bno: $("#BuyerNumber").val(),
+            buyercode: $("#BuyerCode").val()
+        }, function (data) {
+
+            let tbody = $("#resultTable tbody");
+            tbody.empty();
+
+            $.each(data, function (i, item) {
+                tbody.append(`
+                    <tr>
+                        <td>${item.bno}</td>
+                        <td>${item.buyercode}</td>
+                        <td>${item.designNo}</td>
+                        <td>${item.quality}</td>
+                        <td>${item.colour}</td>
+                        <td>${item.collection}</td>
+                        <td>${item.pdesign}</td>
+                        <td class="text-center">
+                            <button class="btn btn-warning btn-sm action-btn btnUpdate" data-id="${item.id}">Edit</button>
+                            <button class="btn btn-danger btn-sm action-btn btnDelete" data-id="${item.id}">Del</button>
+                        </td>
+                    </tr>
+                `);
+            });
+        });
+    });
+
+    // UPDATE
+    $(document).on("click", ".btnUpdate", function () {
+        let id = $(this).data("id");
+        Swal.fire({
+            title: 'Update record?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Yes'
+        }).then(r => {
+            if (r.isConfirmed) {
+                location.href = "/Buyerdesigner/EditBuyerDesign/" + id;
+            }
+        });
+    });
+
+    // DELETE
+    $(document).on("click", ".btnDelete", function () {
+        let id = $(this).data("id");
+        Swal.fire({
+            title: 'Delete permanently?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Delete'
+        }).then(r => {
+            if (r.isConfirmed) {
+                $.post("/Buyerdesigner/DeleteBuyerDesign", { id }, function (res) {
+                    Swal.fire({ icon: 'success', title: 'Deleted', timer: 1200, showConfirmButton: false });
+                    $("#btnShow").click();
+                });
+            }
+        });
+    });
+</script>
+

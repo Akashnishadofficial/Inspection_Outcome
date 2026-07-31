@@ -1,0 +1,70 @@
+﻿@model IEnumerable<dynamic>
+
+<!--Print Button -->
+<div class="mb-2 text-end">
+    <a href="/Packing/PrintPendingPacking?date="
+       target="_blank"
+       class="btn btn-primary btn-sm"
+       onclick="this.href='/Packing/PrintPendingPacking?date='+document.querySelector('input[type=date]').value">
+        Print
+    </a>
+
+</div>
+<div class="table-responsive">
+   
+    <table class="table table-bordered table-hover mb-0" id="packingTable">
+
+        <thead class="table-dark text-center">
+            <tr>
+                <th>Customer</th>
+                <th>Order No</th>
+                <th>Pending PCS</th>
+                <th>Mode</th>
+                <th>Desp.Date</th>
+                <th style="width:200px">Pack</th>
+            </tr>
+        </thead>
+
+        <tbody class="text-center">
+
+            @{
+                int i = 0;
+            }
+
+            @if (Model == null || !Model.Any())
+            {
+                <tr>
+                    <td colspan="4">No pending packing available</td>
+                </tr>
+            }
+            else
+            {
+                foreach (var x in Model)
+                {
+                    <tr>
+                        <td>@x.CustomerCode</td>
+                        <td>@x.OrderNo</td>
+                        <td class="fw-bold text-danger"> @x.PendingPcs</td>
+                        <td>@x.Mode</td>
+                        <td>
+                          <input type="date"id="date_@i"class="form-control form-control-sm"value="@(x.DispatchDate != null? ((DateTime)x.DispatchDate).ToString("yyyy-MM-dd"): DateTime.Now.ToString("yyyy-MM-dd"))" />
+                        </td>
+                        <td>
+                          <div class="d-flex justify-content-center">
+                                <input type="number" id="pcs_@i" class="form-control form-control-sm text-center"style="width:100px"min="1"max="@x.PendingPcs"placeholder="PCS" />
+
+                                <button class="btn btn-success btn-sm ms-2"onclick="savePacking('@x.CustomerCode','@x.OrderNo',@x.PendingPcs,@i,'@x.Mode')">
+                                        Pack
+                                </button>
+
+                          </div>
+                        </td>
+                    </tr>
+
+                    i++;
+                }
+            }
+        </tbody>
+    </table>
+</div>
+

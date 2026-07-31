@@ -1,0 +1,218 @@
+﻿@model IEnumerable<dynamic>
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>IT Asset Print</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            font-size: 12px;
+        }
+
+        .asset-card {
+            border: 2px solid black;
+            padding: 10px;
+            margin-bottom: 20px;
+            page-break-after: always;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        td {
+            border: 1px solid #000;
+            padding: 4px;
+        }
+
+        .title {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .section {
+            background: #eee;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        @@media print {
+            .no-print
+
+        {
+            display: none;
+        }
+
+        }
+    </style>
+</head>
+
+<body>
+
+    <button class="no-print" onclick="window.print()">Print</button>
+
+    @foreach (var r in Model)
+    {
+        <div class="asset-card">
+
+            <div class="title">IT Hardware Asset Sheet</div>
+
+            <table>
+
+                <tr class="section"><td colspan="4">System Details</td></tr>
+                <tr>
+                    <td>System SrNo</td>
+                    <td>@r.SystemSrNo</td>
+                    <td>Department</td>
+                    <td>@r.DepartmentName</td>
+                </tr>
+                <tr>
+                    <td>User Name</td>
+                    <td>@r.UserName</td>
+                    <td>Status</td>
+                    <td>@r.SystemStatus</td>
+                </tr>
+
+                <tr class="section"><td colspan="4">Hardware Configuration</td></tr>
+
+                <tr>
+                    <td>CPU</td>
+                    <td>@r.Cpu</td>
+                    <td>MotherBoard</td>
+                    <td>@r.MotherBoard</td>
+                </tr>
+
+                <tr>
+                    <td>RAM</td>
+                    <td>@r.Ram</td>
+                    <td>Hard Disk</td>
+                    <td>@r.HardDisk</td>
+                </tr>
+
+                <tr>
+                    <td>USB Drive</td>
+                    <td>@r.DataDriveUsb</td>
+                    <td>DVD Combo</td>
+                    <td>@r.Dvdcombo</td>
+                </tr>
+
+                <tr>
+                    <td>Display Card</td>
+                    <td>@r.DisplayCard</td>
+                    <td>Cabinet</td>
+                    <td>@r.Cabinet</td>
+                </tr>
+
+                <tr>
+                    <td>Keyboard</td>
+                    <td>@r.KeyBoard</td>
+                    <td>Mouse</td>
+                    <td>@r.Mouse</td>
+                </tr>
+
+                <tr>
+                    <td>LAN Card</td>
+                    <td>@r.LanCard</td>
+                    <td>Sound Card</td>
+                    <td>@r.SoundCard</td>
+                </tr>
+
+                <tr>
+                    <td>Speaker</td>
+                    <td>@r.Speaker</td>
+                    <td>Monitor</td>
+                    <td>@r.Monitor</td>
+                </tr>
+
+                <tr>
+                    <td>Monitor SrNo</td>
+                    <td>@r.MonitorSrNo</td>
+                    <td>UPS</td>
+                    <td>@r.Ups</td>
+                </tr>
+
+                <tr>
+                    <td>Printer/Scanner</td>
+                    <td>@r.PrinterScanner</td>
+                    <td>Printer SrNo</td>
+                    <td>@r.PrinterScannerSrNo</td>
+                </tr>
+
+                <tr>
+                    <td>Warranty/AMC</td>
+                    <td>@r.WarrantyAmc</td>
+                    <td>Operating System</td>
+                    <td>@r.OperatingSystem</td>
+                </tr>
+
+                <tr>
+                    <td>Antivirus</td>
+                    <td>@r.Antivirus</td>
+                    <td></td>
+                    <td></td>
+                </tr>
+
+                <tr class="section"><td colspan="4">Network Configuration</td></tr>
+
+                <tr>
+                    <td>Computer Name</td>
+                    <td>@r.ComputerName</td>
+                    <td>User Login</td>
+                    <td>@r.UserLoginName</td>
+                </tr>
+
+                <tr>
+                    <td>Password</td>
+                    <td>@r.Password</td>
+                    <td>User Right</td>
+                    <td>@r.UserRight</td>
+                </tr>
+
+                <tr>
+                    <td>IP Address</td>
+                    <td>@r.Ipaddress</td>
+                    <td>Subnet Mask</td>
+                    <td>@r.SubnetMask</td>
+                </tr>
+
+                <tr>
+                    <td>Gateway</td>
+                    <td>@r.Gateway</td>
+                    <td>Preferred DNS</td>
+                    <td>@r.PreferredDns</td>
+                </tr>
+
+                <tr>
+                    <td>Alternate DNS</td>
+                    <td>@r.AlternetDns</td>
+                    <td>Internet Access</td>
+                    <td>@r.InternetAccess</td>
+                </tr>
+
+                <tr>
+                    <td>Email Client</td>
+                    <td>@r.EmailClient</td>
+                    <td></td>
+                    <td></td>
+                </tr>
+
+            </table>
+
+        </div>
+    }
+
+    <script>
+        window.onload = function () {
+            window.print();
+        };
+    </script>
+
+</body>
+</html>

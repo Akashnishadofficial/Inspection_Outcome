@@ -1,0 +1,113 @@
+﻿@model List<Inspection_Outcome.Models.TblSampleLable>
+
+<div class="table-responsive">
+
+    <table class="table table-bordered table-hover table-sm align-middle">
+
+        <thead class="table-dark text-center">
+            <tr>
+                <th>Sample No</th>
+                <th>SrNo</th>
+                <th>Customer</th>
+                <th>Project</th>
+                <th>Design</th>
+                <th>Quality</th>
+                <th>SubQuality</th>
+                <th>Category</th>
+                <th>ItemCode</th>
+                <th>Color</th>
+                <th>Material</th>
+                <th>Texture</th>
+                <th>UOM</th>
+                <th>W(Ft)</th>
+                <th>W(In)</th>
+                <th>L(Ft)</th>
+                <th>L(In)</th>
+                <th style="width:120px">Action</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @if (Model == null || !Model.Any())
+            {
+                <tr>
+                    <td colspan="17" class="text-center text-muted">
+                        No generated sample label records found
+                    </td>
+                </tr>
+            }
+            else
+            {
+                foreach (var r in Model)
+                {
+                    <tr>
+                        <td>@r.SampleNo</td>
+                        <td>@r.SrNo</td>
+                        <td>@r.CustomerNo</td>
+                        <td>@r.ProjectName</td>
+                        <td>@r.Design</td>
+                        <td>@r.Quality</td>
+                        <td>@r.SubQuality</td>
+                        <td>@r.Category</td>
+                        <td>@r.ItemCode</td>
+                        <td>@r.Color</td>
+                        <td>@r.Matrial</td>
+                        <td>@r.Texture</td>
+                        <td>@r.Uom</td>
+                        <td>@r.WdthFt</td>
+                        <td>@r.WdthInch</td>
+                        <td>@r.LnthFt</td>
+                        <td>@r.LnthInch</td>
+
+                        <td class="text-center">
+                            <a href="/SampleLableProj/EditSampleLable/@r.Id"
+                               class="btn btn-sm btn-primary">
+                                Edit
+                            </a>
+
+                            <button class="btn btn-sm btn-danger"
+                                    onclick="deleteRow(@r.Id)">
+                                Delete
+                            </button>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+
+    </table>
+
+</div>
+
+<script>
+    function deleteRow(id) {
+
+        Swal.fire({
+            title: 'Delete Record?',
+            text: "This action cannot be undone.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, Delete',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+
+            if (result.isConfirmed) {
+
+                fetch('/SampleLableProj/DeleteSampleLable/' + id, {
+                    method: 'POST'
+                })
+                .then(() => {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Deleted successfully',
+                        timer: 1200,
+                        showConfirmButton: false
+                    }).then(() => location.reload());
+                });
+
+            }
+        });
+    }
+</script>

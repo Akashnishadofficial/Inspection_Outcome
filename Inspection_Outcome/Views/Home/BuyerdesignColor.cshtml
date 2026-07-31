@@ -1,0 +1,94 @@
+﻿
+@{
+    ViewData["Title"] = "BuyerdesignColor";
+}
+<div class="container-fluid mt-4">
+
+    <h4 class="mb-3 text-warning fw-bold">BuyerdesignerColor Form</h4>
+    <hr/>
+    @if (ViewBag.Message != null)
+    {
+        <script>
+            Swal.fire({
+                icon: 'success',
+                title: 'Done!',
+                text: '@ViewBag.Message',
+                confirmButtonColor: '#198754'
+            });
+        </script>
+    }
+    <form action="BuyerdesignColor" method="post" id="buyerForm">
+
+        <div class="row g-3 align-items-end">
+            <div class="col-sm-3">
+                <label class="form-label">Buyer No.</label>
+                <input type="text" placeholder="Enter Buyer Number" class="form-control" name="Bno" />
+            </div>
+            <div class="col-sm-3">
+                <label class="form-label">Buyer Code.</label>
+                <input type="text" placeholder="Enter Buyer Code" class="form-control" name="buyercode" />
+            </div>
+            <div class="col-sm-3">
+                <label class="form-label">Design No.</label>
+                <input type="text" placeholder="Enter Designer Number" class="form-control" name="designno" />
+            </div>
+            <div class="col-sm-3">
+                <label class="form-label">Quality</label>
+                <input type="text" placeholder="Enter Quality" class="form-control" name="quality"/>
+            </div>
+        </div>
+        <div class="row g-3 align-items-end pt-3">
+            <div class="col-sm-3">
+                <label class="form-label">Collection</label>
+                <input type="text" placeholder="Enter collection" class="form-control" name="Collection" />
+            </div>
+            <div class="col-sm-3">
+                <label class="form-label">Color</label>
+                <input type="text" placeholder="Enter Color" class="form-control" name="colour"/>
+            </div>
+            <div class="col-sm-3">
+                <label class="form-label">PDesign</label>
+                <input type="text" placeholder="Enter PDesign" class="form-control" name="PDesign"/>
+            </div>
+           </div>
+        <div class="row g-3 align-items-end pt-3">
+            <div class="col-sm-9">
+                <input type="checkbox" name="Latex" />Latex &ensp;
+                <input type="checkbox" name="PattiMori" />PattiMori &ensp;
+                <input type="checkbox" name="IIIBacking" />IIIBacking &ensp;
+                <input type="checkbox" name="Binding" />Binding &ensp;
+                <input type="checkbox" name="Berai" />Berai &ensp;
+                <input type="checkbox" name="Clipping" />Clipping &ensp;
+                <input type="checkbox" name="Embossing" />Embossing &ensp;
+                <input type="checkbox" name="Newar" />Newar &ensp;
+                <input type="checkbox" name="Streching" />Streching &ensp;
+                <input type="checkbox" name="Washing" />Washing &ensp;
+            </div>
+        <div class="col-sm-3">
+            <button type="button" id="btnSubmit" class="form-control btn btn-success">
+                Submit
+            </button>
+        </div>
+        </div>
+    </form>
+    </div>
+<script>
+    document.getElementById("btnSubmit").addEventListener("click", function () {
+
+        Swal.fire({
+            title: 'Are you sure?',
+            text: 'Do you want to save this record?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#198754',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, Save',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+
+            if (result.isConfirmed) {
+                document.getElementById("buyerForm").submit();
+            }
+        });
+    });
+</script>

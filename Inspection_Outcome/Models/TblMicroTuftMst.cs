@@ -1,0 +1,25 @@
+﻿using System;
+using System.Collections.Generic;
+
+namespace Inspection_Outcome.Models;
+
+public partial class TblMicroTuftMst
+{
+    public int Id { get; set; }
+
+    public string? Microtuft { get; set; }
+
+    public string? Quality { get; set; }
+
+    public string? Category { get; set; }
+
+    public string? Quantity { get; set; }
+
+    public int? QntyFrom { get; set; }
+
+    public int? QntyTo { get; set; }
+
+    public string? Unit { get; set; }
+
+    public decimal? Price { get; set; }
+}

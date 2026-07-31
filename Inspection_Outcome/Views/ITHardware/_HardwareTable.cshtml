@@ -1,0 +1,123 @@
+﻿@model IEnumerable<dynamic>
+
+<style>
+    .nowrap-table th,
+    .nowrap-table td {
+        white-space: nowrap;
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+    }
+</style>
+
+<div class="table-responsive">
+    <table class="table table-bordered table-striped nowrap-table" id="hardwareTable">
+        <thead class="table-dark">
+            <tr>
+                <th>Select</th>
+
+                <th>System</th>
+                <th>User</th>
+                <th>Department</th>
+                <th>Status</th>
+
+                <th>CPU</th>
+                <th>MotherBoard</th>
+                <th>RAM</th>
+                <th>HardDisk</th>
+                <th>DataDriveUsb</th>
+                <th>Dvdcombo</th>
+                <th>DisplayCard</th>
+
+                <th>Keyboard</th>
+                <th>Mouse</th>
+                <th>LanCard</th>
+                <th>SoundCard</th>
+                <th>Speaker</th>
+
+                <th>Monitor</th>
+                <th>MonitorSrNo</th>
+                <th>Cabinet</th>
+
+                <th>Warranty/AMC</th>
+                <th>OperatingSystem</th>
+                <th>Antivirus</th>
+
+                <th>PrinterScanner</th>
+                <th>PrinterScannerSrNo</th>
+                <th>UPS</th>
+
+                <!-- Network -->
+                <th>ComputerName</th>
+                <th>UserLoginName</th>
+                <th>Password</th>
+                <th>UserRight</th>
+                <th>IP Address</th>
+                <th>SubnetMask</th>
+                <th>Gateway</th>
+                <th>PreferredDNS</th>
+                <th>AlternateDNS</th>
+                <th>InternetAccess</th>
+                <th>EmailClient</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>
+                        <input type="checkbox" name="selectedSystems"
+                               value="@item.SystemSrNo" />
+                    </td>
+
+                    <td>@item.SystemSrNo</td>
+                    <td>@item.UserName</td>
+                    <td>@item.DepartmentName</td>
+                    <td>@item.SystemStatus</td>
+
+                    <td>@item.Cpu</td>
+                    <td>@item.MotherBoard</td>
+                    <td>@item.Ram</td>
+                    <td>@item.HardDisk</td>
+                    <td>@item.DataDriveUsb</td>
+                    <td>@item.Dvdcombo</td>
+                    <td>@item.DisplayCard</td>
+
+                    <td>@item.KeyBoard</td>
+                    <td>@item.Mouse</td>
+                    <td>@item.LanCard</td>
+                    <td>@item.SoundCard</td>
+                    <td>@item.Speaker</td>
+
+                    <td>@item.Monitor</td>
+                    <td>@item.MonitorSrNo</td>
+                    <td>@item.Cabinet</td>
+
+                    <td>@item.WarrantyAmc</td>
+                    <td>@item.OperatingSystem</td>
+                    <td>@item.Antivirus</td>
+
+                    <td>@item.PrinterScanner</td>
+                    <td>@item.PrinterScannerSrNo</td>
+                    <td>@item.Ups</td>
+
+                    <td>@item.ComputerName</td>
+                    <td>@item.UserLoginName</td>
+                    <td>@item.Password</td>
+                    <td>@item.UserRight</td>
+                    <td>@item.Ipaddress</td>
+                    <td>@item.SubnetMask</td>
+                    <td>@item.Gateway</td>
+                    <td>@item.PreferredDns</td>
+                    <td>@item.AlternetDns</td>
+                    <td>@item.InternetAccess</td>
+                    <td>@item.EmailClient</td>
+
+                </tr>
+            }
+        </tbody>
+
+    </table>
+</div>
