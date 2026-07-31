@@ -26,6 +26,10 @@ namespace Inspection_Outcome.Controllers
         {
             return View();
         }
+        public IActionResult Result1()
+        {
+            return View();
+        }
         // ==========================================
         // SAMPLE NO LIST
         // ==========================================
